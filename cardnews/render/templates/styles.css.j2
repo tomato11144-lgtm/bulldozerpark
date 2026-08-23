@@ -1,0 +1,197 @@
+/* 카드뉴스 스타일 — 테마 값이 CSS 변수로 주입됩니다. */
+:root {
+  --bg: {{ t.bg }};
+  --bg-alt: {{ t.bg_alt }};
+  --surface: {{ t.surface }};
+  --ink: {{ t.ink }};
+  --ink-sub: {{ t.ink_sub }};
+  --accent: {{ t.accent }};
+  --accent-ink: {{ t.accent_ink }};
+  --accent2: {{ t.accent2 }};
+  --radius: {{ t.radius }}px;
+  --pad: 88px;
+  --display: '{{ t.display_font }}', 'Noto Sans KR', sans-serif;
+  --body: '{{ t.body_font }}', 'Noto Sans KR', sans-serif;
+  --display-weight: {{ t.display_weight }};
+  --hairline: {{ 'rgba(255,255,255,0.14)' if t.dark else 'rgba(0,0,0,0.10)' }};
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  background: #16161a;
+  font-family: var(--body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+.deck { display: flex; flex-direction: column; align-items: center; gap: 40px; padding: 40px 0; }
+
+.card {
+  position: relative;
+  width: {{ width }}px;
+  height: {{ height }}px;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--bg) 0%, var(--bg-alt) 100%);
+  color: var(--ink);
+  font-size: 32px;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+}
+
+/* ---------- 사진 ---------- */
+.photo {
+  position: absolute; inset: 0; z-index: 0;
+  background-size: cover; background-position: center;
+  filter: {{ t.photo_filter }};
+}
+.photo--top { inset: 0 0 auto 0; height: 46%; }
+.scrim { position: absolute; inset: 0; z-index: 1; }
+.scrim--full {
+  background: linear-gradient(180deg,
+    rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.10) 32%, {{ t.overlay }} 74%, rgba(0,0,0,0.86) 100%);
+}
+.scrim--soft { background: {{ t.overlay }}; }
+
+{% if t.grain %}
+/* 종이 질감 */
+.card::after {
+  content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  opacity: 0.055; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+}
+{% endif %}
+
+/* ---------- 공통 레이아웃 ---------- */
+.content {
+  position: relative; z-index: 3;
+  display: flex; flex-direction: column;
+  height: 100%; padding: var(--pad) var(--pad) 156px;   /* 하단은 푸터 자리를 비워둡니다 */
+}
+.content--onphoto { color: #fff; justify-content: flex-end; }
+.content--onphoto .sub { color: rgba(255,255,255,0.82); }
+
+.spacer { flex: 1 1 auto; }
+
+.badge {
+  align-self: flex-start;
+  font-family: var(--body); font-weight: 700;
+  font-size: 26px; letter-spacing: 0.14em;
+  padding: 12px 22px; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink);
+  text-transform: uppercase;
+}
+.badge--ghost {
+  background: transparent; color: var(--accent);
+  border: 3px solid var(--accent);
+}
+
+.eyebrow {
+  font-size: 30px; font-weight: 700; letter-spacing: 0.06em;
+  color: var(--accent2); margin-bottom: 18px;
+}
+.content--onphoto .eyebrow { color: #fff; opacity: .9; }
+
+h1, h2, h3 { font-family: var(--display); font-weight: var(--display-weight); }
+
+.title {
+  font-size: {{ (104 * t.title_scale) | round | int }}px;
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  white-space: pre-line;
+  word-break: keep-all;
+}
+.title--md { font-size: {{ (78 * t.title_scale) | round | int }}px; line-height: 1.14; }
+.title--sm { font-size: {{ (62 * t.title_scale) | round | int }}px; line-height: 1.18; }
+
+.sub {
+  margin-top: 24px; font-size: 34px; line-height: 1.5;
+  color: var(--ink-sub); word-break: keep-all;
+}
+.body {
+  margin-top: 28px; font-size: 34px; line-height: 1.66;
+  word-break: keep-all; max-width: 22em;
+}
+.content--onphoto .body { color: rgba(255,255,255,0.92); }
+
+.rule { width: 120px; height: 8px; background: var(--accent); border-radius: 999px; margin: 30px 0 0; }
+
+/* ---------- place ---------- */
+.rank {
+  font-family: var(--display); font-weight: var(--display-weight);
+  font-size: 118px; line-height: .92; color: var(--accent);
+  letter-spacing: -0.04em;
+}
+.photo-frame {
+  position: relative; z-index: 2;
+  width: 100%; height: 500px; border-radius: var(--radius);
+  background-size: cover; background-position: center;
+  filter: {{ t.photo_filter }};
+  box-shadow: 0 24px 60px rgba(0,0,0,{{ '0.55' if t.dark else '0.16' }});
+}
+.meta { margin-top: 34px; border-top: 2px solid var(--hairline); }
+.meta-row {
+  display: flex; gap: 24px; align-items: baseline;
+  padding: 16px 0; border-bottom: 2px solid var(--hairline);
+}
+.meta-key {
+  flex: 0 0 168px; font-size: 26px; font-weight: 700;
+  letter-spacing: 0.08em; color: var(--ink-sub);
+}
+.meta-val { flex: 1; font-size: 31px; font-weight: 500; word-break: keep-all; }
+
+/* ---------- list ---------- */
+.bullets { margin-top: 40px; display: flex; flex-direction: column; gap: 26px; }
+.bullet { display: flex; gap: 24px; align-items: flex-start; font-size: 36px; line-height: 1.45; word-break: keep-all; }
+.bullet-num {
+  flex: 0 0 58px; height: 58px; border-radius: 50%;
+  background: var(--accent); color: var(--accent-ink);
+  font-family: var(--body); font-weight: 700; font-size: 28px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ---------- menu ---------- */
+.price {
+  font-family: var(--display); font-weight: var(--display-weight);
+  font-size: 56px; color: var(--accent); margin-top: 12px;
+}
+
+/* ---------- quote ---------- */
+.quote-mark {
+  font-family: var(--display); font-size: 180px; line-height: .6;
+  color: var(--accent); opacity: .9;
+}
+.quote-text {
+  font-family: var(--display); font-weight: var(--display-weight);
+  font-size: {{ (66 * t.title_scale) | round | int }}px; line-height: 1.36;
+  margin-top: 36px; word-break: keep-all;
+}
+
+/* ---------- outro ---------- */
+.cta {
+  margin-top: 40px; align-self: flex-start;
+  font-size: 32px; font-weight: 700;
+  padding: 22px 40px; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink);
+}
+
+/* ---------- 푸터 ---------- */
+.brand {
+  position: absolute; z-index: 4;
+  left: var(--pad); right: var(--pad); bottom: 46px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 25px; letter-spacing: 0.05em; color: var(--ink-sub);
+}
+.content--onphoto ~ .brand, .brand--light { color: rgba(255,255,255,0.72); }
+.page-num { font-weight: 700; }
+.footnote { font-size: 24px; color: var(--ink-sub); margin-top: 22px; }
+.content--onphoto .footnote { color: rgba(255,255,255,0.66); }
+
+.swipe {
+  display: flex; align-items: center; gap: 14px;
+  margin-top: 34px; font-size: 27px; font-weight: 700;
+  color: rgba(255,255,255,0.88); letter-spacing: .04em;
+}
+.swipe .arrow { font-size: 34px; }

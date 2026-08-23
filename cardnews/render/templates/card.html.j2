@@ -1,0 +1,120 @@
+{#- 카드 한 장. kind 에 따라 레이아웃이 갈립니다. -#}
+{%- set has_photo = card.image_url -%}
+{%- set on_photo = card.kind in ('cover', 'quote', 'outro') and has_photo -%}
+<section class="card card--{{ card.kind }}" id="card-{{ loop_index }}"
+         data-kind="{{ card.kind }}" data-index="{{ loop_index }}">
+
+  {%- if card.kind in ('cover', 'quote', 'outro') and has_photo %}
+  <div class="photo" style="background-image:url('{{ card.image_url }}')"></div>
+  <div class="scrim {{ 'scrim--full' if card.kind != 'quote' else 'scrim--soft' }}"></div>
+  {%- elif card.kind == 'intro' and has_photo %}
+  <div class="photo photo--top" style="background-image:url('{{ card.image_url }}')"></div>
+  {%- endif %}
+
+  {%- if card.kind == 'cover' %}
+  <div class="content {{ 'content--onphoto' if on_photo else '' }}">
+    {%- if card.badge %}<div class="badge">{{ card.badge }}</div>{% endif %}
+    <div class="spacer"></div>
+    {%- if card.eyebrow %}<div class="eyebrow">{{ card.eyebrow }}</div>{% endif %}
+    <h1 class="title">{{ card.title }}</h1>
+    {%- if card.subtitle %}<p class="sub">{{ card.subtitle }}</p>{% endif %}
+    <div class="swipe"><span>넘겨보기</span><span class="arrow">→</span></div>
+  </div>
+
+  {%- elif card.kind == 'intro' %}
+  <div class="content" style="padding-top: calc(46% + 56px)">
+    {%- if card.badge %}<div class="badge badge--ghost">{{ card.badge }}</div>{% endif %}
+    <h2 class="title title--md">{{ card.title }}</h2>
+    <div class="rule"></div>
+    {%- if card.body %}<p class="body">{{ card.body }}</p>{% endif %}
+    <div class="spacer"></div>
+    {%- if card.footnote %}<p class="footnote">{{ card.footnote }}</p>{% endif %}
+  </div>
+
+  {%- elif card.kind == 'place' %}
+  <div class="content">
+    <div style="display:flex; align-items:flex-start; gap:28px">
+      {%- if card.badge %}<div class="rank">{{ card.badge }}</div>{% endif %}
+      <div style="flex:1; padding-top:4px">
+        {%- if card.eyebrow %}<div class="eyebrow">{{ card.eyebrow }}</div>{% endif %}
+        <h2 class="title title--sm">{{ card.title }}</h2>
+        {%- if card.subtitle %}<p class="sub" style="margin-top:14px">{{ card.subtitle }}</p>{% endif %}
+      </div>
+    </div>
+    {%- if has_photo %}
+    <div class="photo-frame" style="margin-top:38px; background-image:url('{{ card.image_url }}')"></div>
+    {%- endif %}
+    {%- if card.body %}<p class="body" style="margin-top:30px">{{ card.body }}</p>{% endif %}
+    {%- if card.meta %}
+    <div class="meta">
+      {%- for key, value in card.meta.items() %}
+      <div class="meta-row"><div class="meta-key">{{ key }}</div><div class="meta-val">{{ value }}</div></div>
+      {%- endfor %}
+    </div>
+    {%- endif %}
+    <div class="spacer"></div>
+    {%- if card.footnote %}<p class="footnote">{{ card.footnote }}</p>{% endif %}
+  </div>
+
+  {%- elif card.kind == 'menu' %}
+  <div class="content">
+    {%- if card.badge %}<div class="badge">{{ card.badge }}</div>{% endif %}
+    {%- if has_photo %}
+    <div class="photo-frame" style="margin-top:36px; height:560px; background-image:url('{{ card.image_url }}')"></div>
+    {%- endif %}
+    <h2 class="title title--sm" style="margin-top:40px">{{ card.title }}</h2>
+    {%- if card.subtitle %}<div class="price">{{ card.subtitle }}</div>{% endif %}
+    {%- if card.body %}<p class="body">{{ card.body }}</p>{% endif %}
+    <div class="spacer"></div>
+    {%- if card.footnote %}<p class="footnote">{{ card.footnote }}</p>{% endif %}
+  </div>
+
+  {%- elif card.kind == 'tip' %}
+  <div class="content">
+    {%- if card.badge %}<div class="badge">{{ card.badge }}</div>{% endif %}
+    <div class="spacer"></div>
+    {%- if card.eyebrow %}<div class="eyebrow">{{ card.eyebrow }}</div>{% endif %}
+    <h2 class="title title--md">{{ card.title }}</h2>
+    <div class="rule"></div>
+    {%- if card.body %}<p class="body">{{ card.body }}</p>{% endif %}
+    <div class="spacer"></div>
+    {%- if card.footnote %}<p class="footnote">{{ card.footnote }}</p>{% endif %}
+  </div>
+
+  {%- elif card.kind == 'list' %}
+  <div class="content">
+    {%- if card.badge %}<div class="badge badge--ghost">{{ card.badge }}</div>{% endif %}
+    <h2 class="title title--md" style="margin-top:34px">{{ card.title }}</h2>
+    {%- if card.body %}<p class="body">{{ card.body }}</p>{% endif %}
+    <div class="bullets">
+      {%- for item in card.bullets %}
+      <div class="bullet"><div class="bullet-num">{{ loop.index }}</div><div>{{ item }}</div></div>
+      {%- endfor %}
+    </div>
+    <div class="spacer"></div>
+    {%- if card.footnote %}<p class="footnote">{{ card.footnote }}</p>{% endif %}
+  </div>
+
+  {%- elif card.kind == 'quote' %}
+  <div class="content {{ 'content--onphoto' if on_photo else '' }}" style="justify-content:center">
+    <div class="quote-mark">“</div>
+    <div class="quote-text">{{ card.body or card.title }}</div>
+    {%- if card.footnote %}<p class="footnote" style="margin-top:34px">— {{ card.footnote }}</p>{% endif %}
+  </div>
+
+  {%- else %}{# outro #}
+  <div class="content {{ 'content--onphoto' if on_photo else '' }}">
+    <div class="spacer"></div>
+    {%- if card.eyebrow %}<div class="eyebrow">{{ card.eyebrow }}</div>{% endif %}
+    <h2 class="title title--md">{{ card.title }}</h2>
+    {%- if card.body %}<p class="body">{{ card.body }}</p>{% endif %}
+    {%- if card.subtitle %}<div class="cta">{{ card.subtitle }}</div>{% endif %}
+    <div class="spacer"></div>
+  </div>
+  {%- endif %}
+
+  <div class="brand {{ 'brand--light' if on_photo else '' }}">
+    <span>{{ handle }}</span>
+    <span class="page-num">{{ '%02d' % loop_index }} / {{ '%02d' % total }}</span>
+  </div>
+</section>

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cardnews"
+version = "0.1.0"
+description = "F&B 인스타그램 카드뉴스 생성기 — 주제 한 줄로 카드 이미지와 캡션까지"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "Jinja2>=3.1",
+    "Pillow>=10.0",
+]
+
+[project.optional-dependencies]
+# 크로미움 HTML 렌더러 (디자인 품질이 가장 좋습니다)
+render = ["playwright>=1.40"]
+# 주제 -> 문안 자동 작성
+llm = ["anthropic>=1.0"]
+all = ["playwright>=1.40", "anthropic>=1.0"]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+cardnews = "cardnews.cli:main"
+
+[tool.setuptools]
+packages = ["cardnews", "cardnews.render"]
+
+[tool.setuptools.package-data]
+"cardnews.render" = ["templates/*.j2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
