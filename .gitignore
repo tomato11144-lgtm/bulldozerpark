@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 환경변수 (API 키가 들어갑니다 — 절대 커밋 금지)
+.env
+
+# 다운로드된 폰트 바이너리 (scripts/fetch_fonts.py 로 내려받습니다)
+assets/fonts/*.ttf
+assets/fonts/*.otf
+assets/fonts/*.woff2
+
+# 생성 결과물 / 캐시
+out/
+output/
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db
