@@ -113,9 +113,20 @@ def looks_like_guide(topic: str) -> bool:
 # 언어별 문구
 # --------------------------------------------------------------------------
 
-def _tl(text_en: str, text_tl: str, locale: Locale) -> str:
-    """언어에 맞는 문구 하나를 고릅니다 (병기 모드에서는 영어를 주 문구로)."""
-    return text_tl if locale.code == "tl" else text_en
+def _tl(text_en: str, text_tl: str, locale: Locale, text_taglish: str = "") -> str:
+    """언어에 맞는 문구 하나를 고릅니다.
+
+    - en / en+tl : 영어 (병기 모드는 영어가 주 문구, 따갈로그는 _alt 로 따로)
+    - tl         : 따갈로그
+    - taglish    : 코드 스위칭. 따로 주지 않았으면 따갈로그 쪽을 씁니다 —
+                   그 문구들이 이미 order/parking/reservation 같은 영어 차용어를
+                   그대로 두고 있어서 마닐라식 혼용에 가깝습니다.
+    """
+    if locale.code == "tl":
+        return text_tl
+    if locale.code == "taglish":
+        return text_taglish or text_tl
+    return text_en
 
 
 def _alt(text_tl: str, locale: Locale) -> str:
@@ -202,7 +213,8 @@ def build_offline_intl(
         Card(
             kind="tip",
             badge="TIP 01",
-            title=_tl("What to order first", "Ano ang unang i-order", locale),
+            title=_tl("What to order first", "Ano ang unang i-order", locale,
+                      "Ano ang first order mo"),
             title_alt=_alt("Ano ang unang i-order", locale),
             body=order_tip,
             body_alt=_alt("Simple lang: doon ka mag-start, tapos saka mo subukan ang iba.", locale),
@@ -250,7 +262,8 @@ def _cover(topic, area, food, count, image_query, locale, taglish) -> Card:
                     f"Gabay sa {food}" if area else "Pili ng editor", locale),
         title=title,
         subtitle=_tl("Saved lists beat search results",
-                     "Mas okay ang naka-save kaysa maghanap sa search", locale),
+                     "Mas okay ang naka-save kaysa maghanap sa search", locale,
+                     "Mas sulit ang saved list kaysa sa search results"),
         subtitle_alt=_alt("I-save mo muna, pag-usapan niyo mamaya", locale),
         image_query=image_query,
         image_keywords=[food.lower(), area.lower()] if area else [food.lower()],
@@ -261,7 +274,8 @@ def _intro(area, food, where, image_query, locale, taglish) -> Card:
     return Card(
         kind="intro",
         title=_tl(f"Too many {food} spots, too little time",
-                  f"Ang dami nang {food} spots, kulang ang oras", locale),
+                  f"Ang dami nang {food} spots, kulang ang oras", locale,
+                  f"Ang dami nang {food} spots, saan ba talaga"),
         title_alt=_alt(f"Ang dami nang {food} spots, kulang ang oras", locale),
         body=_tl(
             f"Search {food.lower()} in {where} and you get sponsored posts. "
@@ -282,7 +296,8 @@ def _fillers(food, where, locale, taglish) -> list[Card]:
         Card(
             kind="list",
             badge="CHECK",
-            title=_tl("Check before you go", "I-check bago umalis", locale),
+            title=_tl("Check before you go", "I-check bago umalis", locale,
+                      "I-check muna bago umalis"),
             title_alt=_alt("I-check bago umalis", locale),
             bullets=[
                 _tl("Do they take reservations", "May reservation ba", locale),
@@ -295,7 +310,8 @@ def _fillers(food, where, locale, taglish) -> list[Card]:
             kind="list",
             badge="HOW TO PICK",
             title=_tl(f"Three signs of a good {food} place",
-                      f"Tatlong senyales ng magandang {food} place", locale),
+                      f"Tatlong senyales ng magandang {food} place", locale,
+                      f"3 signs na maganda ang {food} place"),
             title_alt=_alt(f"Tatlong senyales ng magandang {food} place", locale),
             bullets=[
                 _tl("Repeat customers, not first-timers, in the reviews",
@@ -309,7 +325,8 @@ def _fillers(food, where, locale, taglish) -> list[Card]:
         Card(
             kind="tip",
             badge="TIP 02",
-            title=_tl("Going as a pair", "Kung dalawa kayo", locale),
+            title=_tl("Going as a pair", "Kung dalawa kayo", locale,
+                      "Kung dalawa lang kayo"),
             title_alt=_alt("Kung dalawa kayo", locale),
             body=_tl(
                 "One signature dish, one side, one drink each. Add the second main only "
@@ -332,7 +349,8 @@ def _fillers(food, where, locale, taglish) -> list[Card]:
         Card(
             kind="list",
             badge="RED FLAGS",
-            title=_tl("Think twice if you see this", "Mag-isip muna kung ganito", locale),
+            title=_tl("Think twice if you see this", "Mag-isip muna kung ganito", locale,
+                      "Mag-isip ka muna kapag ganito"),
             title_alt=_alt("Mag-isip muna kung ganito", locale),
             bullets=[
                 _tl("Reviews all posted in the same week", "Sabay-sabay ang petsa ng reviews", locale),
@@ -346,7 +364,8 @@ def _fillers(food, where, locale, taglish) -> list[Card]:
 def _outro(handle, image_query, locale, taglish) -> Card:
     return Card(
         kind="outro",
-        title=_tl("Save this before you forget", "I-save mo na bago mo makalimutan", locale),
+        title=_tl("Save this before you forget", "I-save mo na bago mo makalimutan", locale,
+                  "I-save mo na bago mo makalimutan"),
         title_alt=_alt("I-save mo na bago mo makalimutan", locale),
         body=_tl(
             "Tag the person you keep saying 'let's eat out' to. "
@@ -403,7 +422,7 @@ def _caption(topic, area, food, count, handle, locale, taglish) -> str:
     head = (f"{count} {food} spots in {area} worth the trip." if count and area
             else f"{food} in {area}." if area
             else f"How to pick a {food.lower()} place without wasting a night.")
-    if locale.code == "tl":
+    if locale.code in ("tl", "taglish"):
         head = (f"{count} {food} spots sa {area} na sulit puntahan." if count and area
                 else f"{food} sa {area}." if area
                 else f"Paano pumili ng {food.lower()} place na hindi sayang.")

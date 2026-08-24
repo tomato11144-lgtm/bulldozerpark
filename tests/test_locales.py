@@ -222,3 +222,41 @@ def test_facts_ignored_outside_facts_mode():
         card_count=7, mode="placeholder", facts=FACTS,
     )
     assert all("{{" in c.title for c in news.cards if c.kind == "place")
+
+
+def test_taglish_is_not_just_english_with_a_swipe_label():
+    """taglish 모드가 영어 문구를 그대로 쓰던 회귀를 막습니다."""
+    from cardnews.locales import get_locale
+    from cardnews.offline_intl import build_offline_intl
+
+    def titles(code):
+        news = build_offline_intl("Manila K-BBQ best 3", get_locale(code), card_count=8)
+        return [c.title for c in news.cards]
+
+    english, taglish = titles("en"), titles("taglish")
+    # 표지 제목은 지역+음식이라 언어와 무관하게 같습니다. 나머지는 달라야 합니다.
+    differing = sum(1 for a, b in zip(english, taglish) if a != b)
+    assert differing >= 3, f"taglish 가 영어와 거의 같습니다 ({differing}개만 다름)"
+
+
+def test_each_language_has_its_own_register():
+    from cardnews.locales import get_locale
+    from cardnews.offline_intl import build_offline_intl
+
+    def body(code):
+        news = build_offline_intl("Manila K-BBQ best 3", get_locale(code), card_count=8)
+        return " ".join(c.title + c.body + c.subtitle for c in news.cards)
+
+    en, tl, tg = body("en"), body("tl"), body("taglish")
+    assert en != tl and tl != tg and en != tg
+    # 따갈로그·Taglish 는 필리핀어 단서가 있어야 합니다.
+    for text in (tl, tg):
+        assert any(word in text for word in ("Ang ", "mo ", "ka ", "ng ", "sa "))
+
+
+def test_taglish_caption_is_filipino():
+    from cardnews.locales import get_locale
+    from cardnews.offline_intl import build_offline_intl
+
+    news = build_offline_intl("Manila K-BBQ best 3", get_locale("taglish"), card_count=7)
+    assert "Swipe mo lahat" in news.caption
