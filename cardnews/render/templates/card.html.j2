@@ -18,15 +18,19 @@
     {%- if card.eyebrow %}<div class="eyebrow">{{ card.eyebrow }}</div>{% endif %}
     <h1 class="title">{{ card.title }}</h1>
     {%- if card.subtitle %}<p class="sub">{{ card.subtitle }}</p>{% endif %}
-    <div class="swipe"><span>넘겨보기</span><span class="arrow">→</span></div>
+    {%- if card.title_alt %}<div class="alt alt--title">{{ card.title_alt }}</div>{% endif %}
+    {%- if card.subtitle_alt %}<div class="alt alt--sub">{{ card.subtitle_alt }}</div>{% endif %}
+    <div class="swipe"><span>{{ ui.swipe }}</span><span class="arrow">{{ ui.arrow }}</span></div>
   </div>
 
   {%- elif card.kind == 'intro' %}
   <div class="content" style="padding-top: calc(46% + 56px)">
     {%- if card.badge %}<div class="badge badge--ghost">{{ card.badge }}</div>{% endif %}
     <h2 class="title title--md">{{ card.title }}</h2>
+    {%- if card.title_alt %}<div class="alt alt--title">{{ card.title_alt }}</div>{% endif %}
     <div class="rule"></div>
     {%- if card.body %}<p class="body">{{ card.body }}</p>{% endif %}
+    {%- if card.body_alt %}<div class="alt alt--body">{{ card.body_alt }}</div>{% endif %}
     <div class="spacer"></div>
     {%- if card.footnote %}<p class="footnote">{{ card.footnote }}</p>{% endif %}
   </div>
@@ -39,6 +43,7 @@
         {%- if card.eyebrow %}<div class="eyebrow">{{ card.eyebrow }}</div>{% endif %}
         <h2 class="title title--sm">{{ card.title }}</h2>
         {%- if card.subtitle %}<p class="sub" style="margin-top:14px">{{ card.subtitle }}</p>{% endif %}
+        {%- if card.subtitle_alt %}<div class="alt alt--sub">{{ card.subtitle_alt }}</div>{% endif %}
       </div>
     </div>
     {%- if has_photo %}
@@ -75,8 +80,10 @@
     <div class="spacer"></div>
     {%- if card.eyebrow %}<div class="eyebrow">{{ card.eyebrow }}</div>{% endif %}
     <h2 class="title title--md">{{ card.title }}</h2>
+    {%- if card.title_alt %}<div class="alt alt--title">{{ card.title_alt }}</div>{% endif %}
     <div class="rule"></div>
     {%- if card.body %}<p class="body">{{ card.body }}</p>{% endif %}
+    {%- if card.body_alt %}<div class="alt alt--body">{{ card.body_alt }}</div>{% endif %}
     <div class="spacer"></div>
     {%- if card.footnote %}<p class="footnote">{{ card.footnote }}</p>{% endif %}
   </div>
@@ -85,6 +92,7 @@
   <div class="content">
     {%- if card.badge %}<div class="badge badge--ghost">{{ card.badge }}</div>{% endif %}
     <h2 class="title title--md" style="margin-top:34px">{{ card.title }}</h2>
+    {%- if card.title_alt %}<div class="alt alt--title">{{ card.title_alt }}</div>{% endif %}
     {%- if card.body %}<p class="body">{{ card.body }}</p>{% endif %}
     <div class="bullets">
       {%- for item in card.bullets %}
@@ -107,7 +115,9 @@
     <div class="spacer"></div>
     {%- if card.eyebrow %}<div class="eyebrow">{{ card.eyebrow }}</div>{% endif %}
     <h2 class="title title--md">{{ card.title }}</h2>
+    {%- if card.title_alt %}<div class="alt alt--title">{{ card.title_alt }}</div>{% endif %}
     {%- if card.body %}<p class="body">{{ card.body }}</p>{% endif %}
+    {%- if card.body_alt %}<div class="alt alt--body">{{ card.body_alt }}</div>{% endif %}
     {%- if card.subtitle %}<div class="cta">{{ card.subtitle }}</div>{% endif %}
     <div class="spacer"></div>
   </div>

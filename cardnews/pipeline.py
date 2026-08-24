@@ -204,6 +204,7 @@ def create(
     facts: str = "",
     handle: str = "",
     extra: str = "",
+    lang: str = "ko",
     images: str = "auto",
     images_dir: str | Path | None = None,
     renderer: str = "auto",
@@ -227,6 +228,7 @@ def create(
         handle=handle,
         extra=extra,
         theme=theme_name,
+        lang=lang,
         offline=offline,
     )
 
@@ -256,6 +258,7 @@ def rebuild(
     renderer: str = "auto",
     scale: float = 1.0,
     theme: str | None = None,
+    lang: str | None = None,
     settings: Settings | None = None,
 ) -> Result:
     """cards.json 을 고친 뒤 다시 렌더링합니다(자리표시자를 채운 다음 쓰는 경로)."""
@@ -264,6 +267,8 @@ def rebuild(
     news = CardNews.load_json(json_path)
     if theme:
         news.theme = theme
+    if lang:
+        news.lang = lang
     target = Path(out_dir) if out_dir else json_path.parent
     target.mkdir(parents=True, exist_ok=True)
     paths = render(news, target, ratio=ratio, renderer=renderer, scale=scale,

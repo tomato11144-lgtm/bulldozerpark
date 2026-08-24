@@ -10,14 +10,18 @@ import json
 import logging
 
 from .config import Settings
+from .locales import get_locale
 from .models import Card, CardNews
 from .offline import build_offline
-from .prompts import CARDNEWS_SCHEMA, SYSTEM, build_user_prompt
+from .offline_intl import build_offline_intl
+from .prompts import build_user_prompt, cardnews_schema, system_prompt
 
 log = logging.getLogger(__name__)
 
 DEFAULT_TONE = "친근한 존댓말, 과장 없이"
 DEFAULT_AUDIENCE = "20~30대 직장인"
+DEFAULT_TONE_EN = "friendly and specific, no hype"
+DEFAULT_AUDIENCE_EN = "people aged 20-35 deciding where to eat this week"
 
 # facts 없이 특정 가게를 나열해 달라고 하면 지어낼 위험이 커서, 기본은 placeholder.
 MODES = ("placeholder", "facts", "unverified", "guide")
@@ -37,30 +41,53 @@ def resolve_mode(mode: str | None, facts: str) -> str:
     return "facts" if facts.strip() else "placeholder"
 
 
+def build_offline_any(
+    topic: str, lang: str, *, card_count: int, mode: str, facts: str, handle: str
+) -> CardNews:
+    """언어에 맞는 오프라인 생성기를 고릅니다."""
+    locale = get_locale(lang)
+    if locale.code == "ko":
+        news = build_offline(
+            topic, card_count=card_count, mode=mode, facts=facts, handle=handle
+        )
+        news.lang = "ko"
+        return news
+    return build_offline_intl(
+        topic, locale, card_count=card_count, mode=mode, facts=facts, handle=handle
+    )
+
+
 def generate(
     topic: str,
     *,
     settings: Settings | None = None,
     card_count: int = 7,
-    tone: str = DEFAULT_TONE,
-    audience: str = DEFAULT_AUDIENCE,
+    tone: str = "",
+    audience: str = "",
     mode: str | None = None,
     facts: str = "",
     handle: str = "",
     extra: str = "",
     theme: str = "warm",
+    lang: str = "ko",
     offline: bool = False,
 ) -> CardNews:
     """주제 문장 하나로 카드뉴스 문안 한 세트를 만듭니다."""
     settings = settings or Settings.from_env()
+    locale = get_locale(lang)
     mode = resolve_mode(mode, facts)
     card_count = max(3, min(card_count, 12))
+    tone = tone or (DEFAULT_TONE if locale.code == "ko" else DEFAULT_TONE_EN)
+    audience = audience or (
+        DEFAULT_AUDIENCE if locale.code == "ko" else DEFAULT_AUDIENCE_EN
+    )
 
     if offline or not settings.has_llm:
         if not offline:
             log.info("ANTHROPIC_API_KEY 가 없어 오프라인 템플릿 생성기를 사용합니다.")
-        news = build_offline(
-            topic, card_count=card_count, mode=mode, facts=facts, handle=handle
+        news = build_offline_any(
+            topic, locale.code, card_count=card_count, mode=mode,
+            facts=facts, handle=handle,
         )
         news.theme = theme
         return news
@@ -77,11 +104,13 @@ def generate(
             handle=handle,
             extra=extra,
             theme=theme,
+            lang=locale.code,
         )
     except Exception as exc:  # noqa: BLE001 - 어떤 실패든 결과물은 내보냅니다
         log.warning("Claude 호출 실패(%s) — 오프라인 생성기로 폴백합니다.", exc)
-        news = build_offline(
-            topic, card_count=card_count, mode=mode, facts=facts, handle=handle
+        news = build_offline_any(
+            topic, locale.code, card_count=card_count, mode=mode,
+            facts=facts, handle=handle,
         )
         news.theme = theme
         news.notes = (news.notes + f"\n(문안 자동 생성 실패: {exc})").strip()
@@ -100,6 +129,7 @@ def _generate_with_claude(
     handle: str,
     extra: str,
     theme: str,
+    lang: str,
 ) -> CardNews:
     try:
         import anthropic
@@ -116,17 +146,19 @@ def _generate_with_claude(
         facts=facts,
         handle=handle,
         extra=extra,
+        lang=lang,
     )
+    locale = get_locale(lang)
 
     response = client.messages.create(
         model=settings.model,
         max_tokens=16000,
-        system=SYSTEM,
+        system=system_prompt(locale),
         messages=[{"role": "user", "content": user_prompt}],
         thinking={"type": "adaptive"},
         output_config={
             "effort": "medium",
-            "format": {"type": "json_schema", "schema": CARDNEWS_SCHEMA},
+            "format": {"type": "json_schema", "schema": cardnews_schema(lang)},
         },
     )
 
@@ -139,12 +171,13 @@ def _generate_with_claude(
         raise ContentError("모델이 빈 응답을 반환했습니다.")
 
     data = json.loads(text)
-    news = _to_cardnews(data, topic=topic, theme=theme, handle=handle)
+    news = _to_cardnews(data, topic=topic, theme=theme, handle=handle, lang=lang)
     news.source = "claude"
     news.meta.update(
         {
             "model": settings.model,
             "mode": mode,
+            "lang": lang,
             "input_tokens": getattr(response.usage, "input_tokens", None),
             "output_tokens": getattr(response.usage, "output_tokens", None),
         }
@@ -152,7 +185,9 @@ def _generate_with_claude(
     return news
 
 
-def _to_cardnews(data: dict, *, topic: str, theme: str, handle: str) -> CardNews:
+def _to_cardnews(
+    data: dict, *, topic: str, theme: str, handle: str, lang: str = "ko"
+) -> CardNews:
     """모델이 돌려준 dict 를 CardNews 로. 알 수 없는 키는 조용히 버립니다."""
     allowed = set(Card.__dataclass_fields__)
     cards: list[Card] = []
@@ -175,6 +210,7 @@ def _to_cardnews(data: dict, *, topic: str, theme: str, handle: str) -> CardNews
         caption=(data.get("caption") or "").strip(),
         hashtags=[str(h).lstrip("#").strip() for h in data.get("hashtags", []) if str(h).strip()],
         theme=theme,
+        lang=lang,
         handle=handle,
         notes=(data.get("notes") or "").strip(),
     )

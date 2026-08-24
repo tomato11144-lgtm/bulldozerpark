@@ -10,9 +10,9 @@
   --accent2: {{ t.accent2 }};
   --radius: {{ t.radius }}px;
   --pad: 88px;
-  --display: '{{ t.display_font }}', 'Noto Sans KR', sans-serif;
-  --body: '{{ t.body_font }}', 'Noto Sans KR', sans-serif;
-  --display-weight: {{ t.display_weight }};
+  --display: '{{ display_font }}', 'Noto Sans KR', system-ui, sans-serif;
+  --body: '{{ body_font }}', 'Noto Sans KR', system-ui, sans-serif;
+  --display-weight: {{ display_weight }};
   --hairline: {{ 'rgba(255,255,255,0.14)' if t.dark else 'rgba(0,0,0,0.10)' }};
 }
 
@@ -97,14 +97,14 @@ html, body {
 h1, h2, h3 { font-family: var(--display); font-weight: var(--display-weight); }
 
 .title {
-  font-size: {{ (104 * t.title_scale) | round | int }}px;
+  font-size: {{ (104 * title_scale) | round | int }}px;
   line-height: 1.06;
   letter-spacing: -0.02em;
   white-space: pre-line;
   word-break: keep-all;
 }
-.title--md { font-size: {{ (78 * t.title_scale) | round | int }}px; line-height: 1.14; }
-.title--sm { font-size: {{ (62 * t.title_scale) | round | int }}px; line-height: 1.18; }
+.title--md { font-size: {{ (78 * title_scale) | round | int }}px; line-height: 1.14; }
+.title--sm { font-size: {{ (62 * title_scale) | round | int }}px; line-height: 1.18; }
 
 .sub {
   margin-top: 24px; font-size: 34px; line-height: 1.5;
@@ -137,8 +137,10 @@ h1, h2, h3 { font-family: var(--display); font-weight: var(--display-weight); }
   padding: 16px 0; border-bottom: 2px solid var(--hairline);
 }
 .meta-key {
-  flex: 0 0 168px; font-size: 26px; font-weight: 700;
-  letter-spacing: 0.08em; color: var(--ink-sub);
+  /* 라틴 라벨은 한글보다 길어서(LOCATION / SAAN) 열 폭을 더 줍니다. */
+  flex: 0 0 {{ 230 if script == 'latin' else 168 }}px;
+  font-size: {{ 24 if script == 'latin' else 26 }}px; font-weight: 700;
+  letter-spacing: 0.06em; line-height: 1.28; color: var(--ink-sub);
 }
 .meta-val { flex: 1; font-size: 31px; font-weight: 500; word-break: keep-all; }
 
@@ -165,7 +167,7 @@ h1, h2, h3 { font-family: var(--display); font-weight: var(--display-weight); }
 }
 .quote-text {
   font-family: var(--display); font-weight: var(--display-weight);
-  font-size: {{ (66 * t.title_scale) | round | int }}px; line-height: 1.36;
+  font-size: {{ (66 * title_scale) | round | int }}px; line-height: 1.36;
   margin-top: 36px; word-break: keep-all;
 }
 
@@ -195,3 +197,22 @@ h1, h2, h3 { font-family: var(--display); font-weight: var(--display-weight); }
   color: rgba(255,255,255,0.88); letter-spacing: .04em;
 }
 .swipe .arrow { font-size: 34px; }
+
+/* ---------- 보조 언어 줄 (en+tl 병기) ---------- */
+.alt {
+  font-family: var(--body);
+  font-weight: 500;
+  color: var(--accent2);
+  word-break: keep-all;
+}
+.alt--title { font-size: 40px; line-height: 1.28; margin-top: 14px; }
+.alt--sub   { font-size: 30px; line-height: 1.36; margin-top: 10px; opacity: .95; }
+.alt--body  { font-size: 30px; line-height: 1.5;  margin-top: 14px; max-width: 22em; }
+.content--onphoto .alt { color: #fff; opacity: .82; }
+.alt::before {
+  content: ""; display: block;
+  width: 46px; height: 4px; border-radius: 2px;
+  background: var(--accent2); opacity: .55;
+  margin-bottom: 12px;
+}
+.alt--sub::before, .alt--title::before { display: none; }

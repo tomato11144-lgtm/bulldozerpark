@@ -15,7 +15,8 @@ import sys
 from pathlib import Path
 
 from .config import CANVAS_SIZES, DEFAULT_RATIO, Settings
-from .content import DEFAULT_AUDIENCE, DEFAULT_TONE, MODES
+from .content import MODES
+from .locales import LOCALES, locale_codes
 from .pipeline import create, rebuild
 from .themes import THEMES, suggest_theme, theme_names
 
@@ -55,16 +56,18 @@ def build_parser() -> argparse.ArgumentParser:
     reb.add_argument("json", help="cards.json 경로")
     reb.add_argument("-o", "--out", help="결과 폴더 (기본: json 파일이 있는 폴더)")
     reb.add_argument("--theme", choices=theme_names(), help="테마 바꿔서 다시 뽑기")
+    reb.add_argument("--lang", choices=locale_codes(), help="언어를 바꿔서 다시 뽑기")
     reb.add_argument("--ratio", choices=list(CANVAS_SIZES), default=DEFAULT_RATIO)
     reb.add_argument("--renderer", choices=["auto", "chromium", "pillow"], default="auto")
     reb.add_argument("--scale", type=float, default=1.0)
 
     sub.add_parser("themes", help="테마 목록 보기")
+    sub.add_parser("langs", help="지원 언어 목록 보기")
     sub.add_parser("doctor", help="실행 환경 점검 (폰트/브라우저/API 키)")
     return parser
 
 
-COMMANDS = ("generate", "rebuild", "themes", "doctor")
+COMMANDS = ("generate", "rebuild", "themes", "langs", "doctor")
 
 
 def normalize(argv: list[str]) -> list[str]:
@@ -88,8 +91,10 @@ def _add_generate_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--ratio", choices=list(CANVAS_SIZES), default=DEFAULT_RATIO,
                    help="캔버스 비율 (기본 4:5)")
     p.add_argument("--handle", default="", help="계정명 (예: @bulldozer.eats)")
-    p.add_argument("--tone", default=DEFAULT_TONE, help="말투")
-    p.add_argument("--audience", default=DEFAULT_AUDIENCE, help="타깃 독자")
+    p.add_argument("--lang", default="ko", choices=locale_codes(),
+                   help="문안 언어: ko(기본) / en / tl(따갈로그) / taglish / en+tl(병기)")
+    p.add_argument("--tone", default="", help="말투 (기본값은 언어에 맞춰 자동)")
+    p.add_argument("--audience", default="", help="타깃 독자 (기본값은 언어에 맞춰 자동)")
     p.add_argument("--mode", choices=list(MODES),
                    help="facts=제공 자료만 사용 / placeholder=자리표시자(기본) / "
                         "unverified=예시 허용 / guide=가게 없이 정보형")
@@ -117,6 +122,17 @@ def cmd_themes() -> int:
     return 0
 
 
+def cmd_langs() -> int:
+    print("지원 언어\n")
+    for loc in LOCALES.values():
+        print(f"  {loc.code:<8} {loc.label}")
+        if loc.note:
+            print(f"           {loc.note}")
+        print(f"           카드 라벨: {' · '.join(loc.meta_labels()[:3])}\n")
+    print("예: cardnews \"Manila K-BBQ best 5\" --lang en+tl --theme neon")
+    return 0
+
+
 def cmd_doctor() -> int:
     from .fonts import available_families
     from .render.chromium import _find_chrome, _has_playwright
@@ -127,14 +143,14 @@ def cmd_doctor() -> int:
     print("환경 점검\n")
 
     have = available_families()
-    need = set(all_fonts())
-    missing = sorted(need - have)
-    if missing:
-        ok = False
-        print(f"  [!] 폰트 {len(missing)}개 없음: {', '.join(missing)}")
-        print("      -> python scripts/fetch_fonts.py")
-    else:
-        print(f"  [o] 폰트 {len(have)}개 준비됨")
+    for script, label in (("hangul", "한글"), ("latin", "영어·따갈로그")):
+        missing = sorted(set(all_fonts(script)) - have)
+        if missing:
+            ok = False
+            print(f"  [!] {label} 폰트 {len(missing)}개 없음: {', '.join(missing)}")
+            print(f"      -> python scripts/fetch_fonts.py --script {script}")
+        else:
+            print(f"  [o] {label} 폰트 준비됨")
 
     if _has_playwright():
         print("  [o] Playwright 설치됨")
@@ -189,6 +205,7 @@ def cmd_generate(args: argparse.Namespace) -> int:
         facts=_read_facts(args.facts),
         handle=args.handle,
         extra=args.extra,
+        lang=args.lang,
         images=args.images,
         images_dir=args.images_dir,
         renderer=args.renderer,
@@ -216,6 +233,7 @@ def cmd_rebuild(args: argparse.Namespace) -> int:
     result = rebuild(
         args.json, out_dir=args.out, ratio=args.ratio,
         renderer=args.renderer, scale=args.scale, theme=args.theme,
+        lang=args.lang,
     )
     print(f"다시 렌더 완료 — {len(result.images)}장 -> {result.out_dir}")
     return 0
@@ -231,6 +249,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "themes":
         return cmd_themes()
+    if args.command == "langs":
+        return cmd_langs()
     if args.command == "doctor":
         return cmd_doctor()
     if args.command == "rebuild":

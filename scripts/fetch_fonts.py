@@ -88,14 +88,19 @@ def fetch(families: dict[str, list[int]], force: bool = False) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description="카드뉴스 테마용 한글 폰트 다운로드")
     parser.add_argument("--theme", help="특정 테마의 폰트만 받기", choices=sorted(THEMES))
+    parser.add_argument("--script", choices=["hangul", "latin"],
+                        help="문자 계열만 받기 (hangul=한글, latin=영어·따갈로그)")
     parser.add_argument("--force", action="store_true", help="이미 있어도 다시 받기")
     args = parser.parse_args()
 
     if args.theme:
         theme = THEMES[args.theme]
-        families = {f: FONT_WEIGHTS.get(f, [400]) for f in theme.fonts}
+        names = theme.fonts_for(args.script) if args.script else [
+            *theme.fonts, *theme.latin_fonts
+        ]
+        families = {f: FONT_WEIGHTS.get(f, [400]) for f in names}
     else:
-        families = all_fonts()
+        families = all_fonts(args.script or "")
 
     return fetch(families, force=args.force)
 

@@ -8,7 +8,7 @@ import pytest
 
 from cardnews.config import Settings
 from cardnews.content import _to_cardnews, generate, resolve_mode
-from cardnews.prompts import CARDNEWS_SCHEMA, build_user_prompt
+from cardnews.prompts import build_user_prompt, cardnews_schema
 
 VALID_RESPONSE = {
     "title": "성수동 파스타 BEST 3",
@@ -65,8 +65,9 @@ def fake_anthropic(monkeypatch):
 
     class FakeMessages:
         def create(self, **kwargs):
+            payload = captured.pop("_payload", None) or VALID_RESPONSE
             captured.update(kwargs)
-            return _FakeResponse(captured.pop("_payload", None) or VALID_RESPONSE)
+            return _FakeResponse(payload)
 
     class FakeClient:
         def __init__(self, api_key=None, **_):
@@ -89,7 +90,7 @@ def test_request_shape(fake_anthropic):
     assert fake_anthropic["thinking"] == {"type": "adaptive"}
     fmt = fake_anthropic["output_config"]["format"]
     assert fmt["type"] == "json_schema"
-    assert fmt["schema"] is CARDNEWS_SCHEMA
+    assert fmt["schema"] == cardnews_schema("ko")
     assert fake_anthropic["messages"][0]["role"] == "user"
     assert "성수동 파스타 맛집" in fake_anthropic["messages"][0]["content"]
 
@@ -156,3 +157,81 @@ def test_to_cardnews_raises_without_cards():
 
     with pytest.raises(ContentError):
         _to_cardnews({"cards": []}, topic="t", theme="warm", handle="")
+
+
+# --------------------------------------------------------------------------
+# 다국어
+# --------------------------------------------------------------------------
+
+BILINGUAL_RESPONSE = {
+    "title": "Manila K-BBQ BEST 3",
+    "caption": "Three K-BBQ spots worth the traffic.",
+    "hashtags": ["ManilaEats", "#kbbq"],
+    "notes": "Confirm prices before posting.",
+    "cards": [
+        {
+            "kind": "cover", "badge": "K-BBQ", "eyebrow": "", "title": "Manila\nK-BBQ TOP 3",
+            "subtitle": "Saved beats searched", "body": "", "bullets": [], "meta": {},
+            "footnote": "", "image_query": "korean bbq", "image_keywords": [],
+            "title_alt": "", "subtitle_alt": "I-save mo muna", "body_alt": "",
+        },
+        {
+            "kind": "outro", "badge": "", "eyebrow": "", "title": "Save this",
+            "subtitle": "", "body": "Tag your kain buddy.", "bullets": [], "meta": {},
+            "footnote": "", "image_query": "", "image_keywords": [],
+            "title_alt": "I-save mo na", "subtitle_alt": "", "body_alt": "Tag mo na siya.",
+        },
+    ],
+}
+
+
+def test_language_reaches_prompt_and_schema(fake_anthropic):
+    fake_anthropic["_payload"] = BILINGUAL_RESPONSE
+    generate("Manila K-BBQ best 3", settings=_settings(), lang="en+tl")
+    schema = fake_anthropic["output_config"]["format"]["schema"]
+    card_props = schema["properties"]["cards"]["items"]["properties"]
+    assert "title_alt" in card_props and "body_alt" in card_props
+    # 시스템 프롬프트가 영어 계열로 바뀌고 병기 규칙이 실려야 합니다.
+    assert "Taglish" not in fake_anthropic["system"]
+    assert "bilingual" in fake_anthropic["system"]
+
+
+def test_korean_schema_has_no_alt_fields(fake_anthropic):
+    generate("성수동 파스타", settings=_settings(), lang="ko")
+    card_props = (fake_anthropic["output_config"]["format"]["schema"]
+                  ["properties"]["cards"]["items"]["properties"])
+    assert not [k for k in card_props if k.endswith("_alt")]
+
+
+def test_alt_fields_are_parsed(fake_anthropic):
+    fake_anthropic["_payload"] = BILINGUAL_RESPONSE
+    news = generate("Manila K-BBQ best 3", settings=_settings(), lang="en+tl")
+    assert news.lang == "en+tl"
+    assert news.cards[0].subtitle_alt == "I-save mo muna"
+    assert news.cards[1].body_alt == "Tag mo na siya."
+
+
+def test_taglish_system_prompt_differs():
+    from cardnews.locales import get_locale
+    from cardnews.prompts import system_prompt
+
+    assert "Taglish" in system_prompt(get_locale("taglish"))
+    assert "Filipino (Tagalog)" in system_prompt(get_locale("tl"))
+    assert "카드뉴스" in system_prompt(get_locale("ko"))
+
+
+def test_offline_fallback_respects_language():
+    news = generate("Manila K-BBQ best 3", settings=Settings(), lang="en+tl", card_count=7)
+    assert news.source == "offline"
+    assert news.lang == "en+tl"
+    # 한글이 섞여 나오면 안 됩니다.
+    joined = " ".join(c.title + c.body + c.subtitle for c in news.cards)
+    assert not any("\uac00" <= ch <= "\ud7a3" for ch in joined)
+
+
+def test_english_prompt_lists_localised_meta_labels():
+    prompt = build_user_prompt(
+        "Manila K-BBQ", card_count=6, tone="t", audience="a", mode="placeholder", lang="en"
+    )
+    assert "MUST ORDER" in prompt
+    assert "위치" not in prompt

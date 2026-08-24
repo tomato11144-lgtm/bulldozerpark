@@ -5,6 +5,7 @@
 
 ```bash
 cardnews "성수동 파스타 맛집 TOP 5" --handle @bulldozer.eats
+cardnews "Manila K-BBQ best 5" --lang en+tl --theme neon   # 영어 + 따갈로그 병기
 ```
 
 ```
@@ -97,6 +98,35 @@ cardnews rebuild out/연남동-맛집-BEST-5/cards.json --theme mint
 
 ---
 
+## 언어
+
+`--lang` 으로 문안 언어를 바꿉니다. 카드 라벨(위치/대표메뉴/가격대), 하단 UI 문구,
+해시태그, 서체가 언어에 맞춰 함께 바뀝니다.
+
+| 값 | 결과 | 언제 |
+|---|---|---|
+| `ko` (기본) | 한국어 | 국내 계정 |
+| `en` | 영어 | 영어권 계정 |
+| `tl` | 따갈로그 | 필리핀 현지 계정 |
+| `taglish` | 영어·따갈로그 자연 혼용 | 마닐라 소셜에서 가장 자연스러운 톤 |
+| `en+tl` | 두 줄 병기 | 영어를 주 문구, 따갈로그를 보조 줄로 |
+
+```bash
+cardnews "Manila K-BBQ best 5" --lang en+tl --theme neon --handle @your.account
+cardnews "Best unli samgyup in BGC" --lang taglish --theme pop
+```
+
+`en+tl` 은 카드마다 영어 문구 아래에 강조색 따갈로그 한 줄이 붙습니다. 직역이 아니라
+같은 내용을 현지 톤으로 다시 쓴 문장입니다. `cardnews langs` 로 목록을 볼 수 있습니다.
+
+서체는 언어에 따라 자동으로 갈아끼웁니다 — 한글은 Black Han Sans·Jua 계열,
+라틴 문자는 Anton·Archivo Black 계열이라 따갈로그의 `ñ`, `á` 까지 깨지지 않습니다.
+
+```bash
+python scripts/fetch_fonts.py --script latin    # 영어·따갈로그용만
+python scripts/fetch_fonts.py --script hangul   # 한글용만
+```
+
 ## 테마
 
 `cardnews themes` 로 확인할 수 있습니다. 기본값 `--theme auto` 는 주제 키워드를 보고 고릅니다.
@@ -121,6 +151,7 @@ cardnews "<주제>" [옵션]
       --theme NAME     테마 (기본 auto)
       --ratio 4:5      4:5(기본) | 1:1 | 9:16
       --handle @name   카드 하단에 들어갈 계정명
+      --lang CODE      ko(기본) | en | tl | taglish | en+tl
       --facts PATH     검증된 가게·메뉴 정보 (파일 또는 문자열)
       --mode MODE      placeholder | facts | guide | unverified
       --images-dir DIR 내 사진 폴더 (결과 품질 차이가 가장 큽니다)
@@ -131,7 +162,11 @@ cardnews "<주제>" [옵션]
   -o, --out DIR        결과 폴더 지정
 ```
 
-부가 명령: `cardnews themes`, `cardnews doctor`, `cardnews rebuild <cards.json>`
+부가 명령: `cardnews themes`, `cardnews langs`, `cardnews doctor`,
+`cardnews rebuild <cards.json>`
+
+`rebuild` 는 `--lang` 도 받습니다. 한국어로 뽑은 세트를 그대로 영어판으로 다시
+렌더링할 수 있습니다 (문구는 `cards.json` 에서 직접 고쳐야 합니다).
 
 ---
 
@@ -215,6 +250,7 @@ render(news, "out/신메뉴")
 | 문안이 밋밋함 | `ANTHROPIC_API_KEY` 를 설정하면 Claude 가 씁니다 |
 | 가게 정보가 `{{...}}` 로 나옴 | 의도된 동작입니다. 위의 "사실 관계" 항목을 보세요 |
 | 카드 수가 요청과 다름 | 주제에 `TOP 5` 처럼 개수가 있으면 그쪽을 우선합니다 |
+| 따갈로그 글자가 깨짐 | `python scripts/fetch_fonts.py --script latin` |
 
 ---
 
@@ -227,7 +263,9 @@ cardnews/
 ├── content.py       Claude 로 문안 생성 (+ 실패 시 폴백)
 ├── offline.py       API 키 없이 도는 규칙 기반 생성기
 ├── prompts.py       F&B 카피 프롬프트 + 구조화 출력 스키마
-├── themes.py        테마 6종 (색 · 폰트 · 장식)
+├── themes.py        테마 6종 (색 · 폰트 · 장식, 한글/라틴 서체 짝)
+├── locales.py       언어팩 (라벨 · UI 문구 · 해시태그 · 문자 계열)
+├── offline_intl.py  영어/따갈로그/Taglish 규칙 기반 생성기
 ├── images.py        사진 소스 (로컬 / Unsplash / Pexels / 그라데이션)
 ├── models.py        Card, CardNews 데이터 모델
 ├── fonts.py         폰트 로딩

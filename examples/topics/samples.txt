@@ -18,3 +18,12 @@
 # 시즌/이벤트형
 장마철에 생각나는 뜨끈한 국물 요리
 연말 회식 장소 고르는 기준
+
+# --- 해외 / 필리핀 계정 (--lang 필요) ---
+# cardnews "<주제>" --lang en+tl --theme neon --handle @your.account
+
+Manila K-BBQ best 5
+Best unli samgyup in BGC
+Where to eat in Poblacion after 10pm
+Quezon City milk tea spots worth the queue
+How to pick a K-BBQ place without wasting a night

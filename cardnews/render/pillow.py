@@ -14,6 +14,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 from ..fonts import resolve_ttf
+from ..locales import Locale, get_locale
 from ..models import Card, CardNews
 from ..themes import Theme, get_theme
 
@@ -135,12 +136,23 @@ def _pill(
 class PillowRenderer:
     """카드 한 장씩 PNG 로 그립니다."""
 
-    def __init__(self, theme: Theme, size: tuple[int, int] = (1080, 1350)):
+    def __init__(
+        self,
+        theme: Theme,
+        size: tuple[int, int] = (1080, 1350),
+        locale: Locale | None = None,
+    ):
         self.t = theme
         self.size = size
+        self.locale = locale or get_locale("ko")
+        script = self.locale.script
+        self.scale = theme.title_scale_for(script)
+        self.meta_col = 230 if script == "latin" else 168
         self.fonts = _Fonts(
-            display=resolve_ttf(theme.display_font, theme.display_weight),
-            body=resolve_ttf(theme.body_font, 400),
+            display=resolve_ttf(
+                theme.display_for(script), theme.display_weight_for(script)
+            ),
+            body=resolve_ttf(theme.body_for(script), 400),
         )
 
     # -- 헬퍼 ------------------------------------------------------------
@@ -167,6 +179,28 @@ class PillowRenderer:
                 return _cover_fit(src.convert("RGB"), size)
         except Exception:  # noqa: BLE001 - 깨진 파일은 그냥 배경 없이
             return None
+
+    def _alt_block(
+        self,
+        draw: ImageDraw.ImageDraw,
+        text: str,
+        *,
+        y: int,
+        max_w: int,
+        size: int = 30,
+        rule: bool = True,
+    ) -> int:
+        """보조 언어 줄. 짧은 밑줄 표시를 앞에 두어 주 문구와 구분합니다."""
+        if not text:
+            return y
+        colour = _rgb(self.t.accent2)
+        if rule:
+            draw.rounded_rectangle([PAD, y + 6, PAD + 46, y + 10], radius=2, fill=colour)
+            y += 26
+        return _draw_text_block(
+            draw, text, xy=(PAD, y), font=self.fonts.get("body", size),
+            fill=colour, max_w=max_w, line_height=1.4,
+        ) + 10
 
     # -- 본체 ------------------------------------------------------------
     def render_card(self, card: Card, index: int, total: int, handle: str) -> Image.Image:
@@ -195,9 +229,9 @@ class PillowRenderer:
         sub_col = (235, 235, 235) if on_photo else self.sub
 
         f_badge = self.fonts.get("body", 26)
-        f_title = self.fonts.get("display", int(96 * self.t.title_scale))
-        f_title_md = self.fonts.get("display", int(72 * self.t.title_scale))
-        f_title_sm = self.fonts.get("display", int(58 * self.t.title_scale))
+        f_title = self.fonts.get("display", int(96 * self.scale))
+        f_title_md = self.fonts.get("display", int(72 * self.scale))
+        f_title_sm = self.fonts.get("display", int(58 * self.scale))
         f_body = self.fonts.get("body", 34)
         f_sub = self.fonts.get("body", 33)
         f_meta_k = self.fonts.get("body", 26)
@@ -217,8 +251,17 @@ class PillowRenderer:
                           text_col, 1.1))
             if card.subtitle and card.kind == "cover":
                 block.append((card.subtitle, f_sub, sub_col, 1.5))
+            if card.title_alt:
+                block.append((card.title_alt, self.fonts.get("body", 38),
+                              _rgb(self.t.accent2), 1.3))
+            if card.subtitle_alt:
+                block.append((card.subtitle_alt, self.fonts.get("body", 29),
+                              _rgb(self.t.accent2), 1.35))
             if card.body:
                 block.append((card.body, f_body, sub_col, 1.65))
+            if card.body_alt:
+                block.append((card.body_alt, self.fonts.get("body", 29),
+                              _rgb(self.t.accent2), 1.45))
             if card.subtitle and card.kind == "outro":
                 block.append((card.subtitle, f_sub, _rgb(self.t.accent2), 1.5))
 
@@ -242,6 +285,12 @@ class PillowRenderer:
             if card.subtitle:
                 ty = _draw_text_block(draw, card.subtitle, xy=(PAD + rank_w, ty + 10),
                                       font=f_sub, fill=sub_col, max_w=max_w - rank_w)
+            if card.subtitle_alt:
+                ty = _draw_text_block(
+                    draw, card.subtitle_alt, xy=(PAD + rank_w, ty + 6),
+                    font=self.fonts.get("body", 28), fill=_rgb(self.t.accent2),
+                    max_w=max_w - rank_w, line_height=1.35,
+                )
             y = max(ty, y + int(rank_font.size * 1.05)) + 34
 
             if photo:
@@ -259,15 +308,19 @@ class PillowRenderer:
                 for key, value in card.meta.items():
                     draw.line([(PAD, y), (w - PAD, y)], fill=self.sub, width=2)
                     y += 16
-                    draw.text((PAD, y + 4), key, font=f_meta_k, fill=self.sub)
-                    _draw_text_block(draw, value, xy=(PAD + 168, y), font=f_meta_v,
-                                     fill=text_col, max_w=max_w - 168)
+                    _draw_text_block(draw, key, xy=(PAD, y + 4), font=f_meta_k,
+                                     fill=self.sub, max_w=self.meta_col - 20,
+                                     line_height=1.3)
+                    _draw_text_block(draw, value, xy=(PAD + self.meta_col, y),
+                                     font=f_meta_v, fill=text_col,
+                                     max_w=max_w - self.meta_col)
                     y += 52
                 draw.line([(PAD, y), (w - PAD, y)], fill=self.sub, width=2)
 
         elif card.kind == "list":
             y = _draw_text_block(draw, card.title, xy=(PAD, y), font=f_title_md,
-                                 fill=text_col, max_w=max_w, line_height=1.15) + 34
+                                 fill=text_col, max_w=max_w, line_height=1.15) + 20
+            y = self._alt_block(draw, card.title_alt, y=y, max_w=max_w, size=32, rule=False) + 14
             if card.body:
                 y = _draw_text_block(draw, card.body, xy=(PAD, y), font=f_body,
                                      fill=sub_col, max_w=max_w) + 20
@@ -282,7 +335,7 @@ class PillowRenderer:
                 y = max(end, y + 58) + 26
 
         elif card.kind == "quote":
-            f_quote = self.fonts.get("display", int(60 * self.t.title_scale))
+            f_quote = self.fonts.get("display", int(60 * self.scale))
             body = card.body or card.title
             lines = _wrap(draw, body, f_quote, max_w)
             height = len(lines) * int(f_quote.size * 1.36)
@@ -312,6 +365,7 @@ class PillowRenderer:
                                      fill=_rgb(self.t.accent2), max_w=max_w) + 12
             y = _draw_text_block(draw, card.title, xy=(PAD, y), font=f_title_md,
                                  fill=text_col, max_w=max_w, line_height=1.15) + 12
+            y = self._alt_block(draw, card.title_alt, y=y, max_w=max_w, size=32, rule=False)
             if card.subtitle:
                 y = _draw_text_block(draw, card.subtitle, xy=(PAD, y),
                                      font=self.fonts.get("display", 52),
@@ -321,6 +375,7 @@ class PillowRenderer:
             if card.body:
                 y = _draw_text_block(draw, card.body, xy=(PAD, y), font=f_body,
                                      fill=text_col, max_w=max_w, line_height=1.66)
+            y = self._alt_block(draw, card.body_alt, y=y + 12, max_w=max_w)
 
         # 각주 + 푸터
         if card.footnote and card.kind != "quote":
@@ -345,7 +400,7 @@ def render_png(
     size: tuple[int, int] = (1080, 1350),
 ) -> list[Path]:
     theme = theme or get_theme(news.theme)
-    renderer = PillowRenderer(theme, size)
+    renderer = PillowRenderer(theme, size, locale=get_locale(news.lang))
     total = len(news.cards)
     results = []
     for i, (card, out) in enumerate(zip(news.cards, out_paths), start=1):

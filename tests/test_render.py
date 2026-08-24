@@ -161,3 +161,59 @@ def test_unknown_renderer_falls_back_to_pillow(tmp_path, monkeypatch):
     monkeypatch.setattr(chromium, "_find_chrome", lambda *a, **k: None)
     paths = render(_news(), tmp_path, renderer="auto")
     assert all(p.is_file() for p in paths)
+
+
+# --------------------------------------------------------------------------
+# 다국어 렌더링
+# --------------------------------------------------------------------------
+
+def _intl_news(lang="en+tl"):
+    from cardnews.locales import get_locale
+    from cardnews.offline_intl import build_offline_intl
+
+    news = build_offline_intl("Manila K-BBQ best 3", get_locale(lang), card_count=7)
+    news.theme = "neon"
+    news.handle = "@test"
+    return news
+
+
+def test_latin_language_uses_latin_fonts():
+    doc = build_html(_intl_news())
+    assert "Anton" in doc.html          # neon 테마의 라틴 제목 서체
+    assert "Black Han Sans" not in doc.html
+
+
+def test_korean_language_keeps_hangul_fonts():
+    doc = build_html(_news())
+    assert "Black Han Sans" in doc.html
+    assert "Anton" not in doc.html
+
+
+def test_ui_strings_follow_the_locale():
+    assert "SWIPE" in build_html(_intl_news()).html
+    assert "SWIPE MO" in build_html(_intl_news("taglish")).html
+    assert "넘겨보기" in build_html(_news()).html
+
+
+def test_alt_lines_render_only_when_present():
+    # 스타일시트에는 항상 .alt 규칙이 있으므로 실제 엘리먼트로 확인합니다.
+    assert 'class="alt alt--' in build_html(_intl_news("en+tl")).html
+    assert 'class="alt alt--' not in build_html(_intl_news("en")).html
+
+
+def test_both_renderers_handle_bilingual_cards(tmp_path):
+    from PIL import Image
+
+    news = _intl_news()
+    paths = render(news, tmp_path, renderer="pillow")
+    assert len(paths) == len(news.cards)
+    with Image.open(paths[0]) as img:
+        assert img.size == (1080, 1350)
+
+
+def test_rebuild_can_switch_language(tmp_path):
+    news = _intl_news()
+    paths = render(news, tmp_path, renderer="pillow")
+    write_sidecars(news, tmp_path, paths, [])
+    result = rebuild(tmp_path / "cards.json", renderer="pillow", lang="en")
+    assert result.news.lang == "en"

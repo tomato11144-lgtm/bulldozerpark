@@ -14,6 +14,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from ..config import FONT_DIR, TEMPLATE_DIR, canvas_size
 from ..fonts import face_rules, google_fonts_url, missing_report
+from ..locales import get_locale
 from ..models import CardNews
 from ..themes import Theme, get_theme
 
@@ -74,10 +75,11 @@ def build_html(
 ) -> RenderDoc:
     """카드뉴스 한 세트를 한 장의 HTML 문서로 만듭니다."""
     theme = theme or get_theme(news.theme)
+    locale = get_locale(news.lang)
     width, height = canvas_size(ratio)
     cards, routes = prepare_cards(news)
 
-    families = theme.fonts
+    families = theme.fonts_for(locale.script)
     missing = missing_report(families)
     # 로컬 TTF 가 하나라도 있으면 그걸 쓰고, 전부 없으면 Google Fonts 로 폴백합니다.
     faces = face_rules(families, None if embed_fonts else FONT_URL_PREFIX)
@@ -89,7 +91,14 @@ def build_html(
                 routes[f"{FONT_URL_PREFIX}/{path.name}"] = path
 
     env = _env()
-    styles = env.get_template("styles.css.j2").render(t=theme, width=width, height=height)
+    styles = env.get_template("styles.css.j2").render(
+        t=theme, width=width, height=height,
+        display_font=theme.display_for(locale.script),
+        body_font=theme.body_for(locale.script),
+        display_weight=theme.display_weight_for(locale.script),
+        title_scale=theme.title_scale_for(locale.script),
+        script=locale.script,
+    )
     template = env.get_template("page.html.j2")
 
     def render_page(subset: list[dict[str, Any]], offset: int = 0) -> str:
@@ -103,6 +112,7 @@ def build_html(
             font_faces=faces,
             font_link=font_link,
             t=theme,
+            ui=locale.ui,
         )
 
     html = render_page(cards)

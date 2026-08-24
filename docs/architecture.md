@@ -9,7 +9,8 @@
    │
    ▼
 content.generate()            ── ANTHROPIC_API_KEY 있음 → Claude 구조화 출력
-   │                          ── 없음/실패      → offline.build_offline()
+   │                          ── 없음/실패      → offline(_intl).build_*()
+   │                          언어(locales.Locale)가 프롬프트·스키마·폴백을 모두 가릅니다
    ▼
 CardNews (models.py)          카드 리스트 + 캡션 + 해시태그
    │
@@ -45,6 +46,21 @@ Pillow 렌더러는 같은 값을 직접 읽습니다.
 `file://` 로 열면 크로미움이 폰트를 CORS 로 막고, base64 로 심으면
 문서가 수십 MB 가 되기 때문입니다.
 
+## 언어를 추가하려면
+
+1. `locales.py` 의 `LOCALES` 에 `Locale` 하나를 더합니다 — meta 라벨은
+   `META_FIELDS` 의 키를 전부 채워야 합니다(`test_locales.py` 가 검사합니다).
+2. `prompts.LANGUAGE_RULES` 에 출력 언어 지시를 추가합니다. 시스템 프롬프트는
+   한국어면 `SYSTEM_KO`, 그 외에는 `SYSTEM_EN` 을 씁니다.
+3. 라틴 문자가 아니면 `Theme` 에 서체 짝을 하나 더 만들고
+   `fonts_for()` / `display_for()` 분기를 넓힙니다.
+4. API 키 없이도 돌아가야 하니 폴백 생성기를 손봅니다 — 라틴 문자권이면
+   `offline_intl.py` 의 어휘와 문구에 언어 분기를 추가하면 됩니다.
+
+`bilingual`(= `alt` 가 설정된) 로케일은 `Card.title_alt` / `subtitle_alt` /
+`body_alt` 를 채우고, 두 렌더러가 이를 강조색 보조 줄로 그립니다.
+구조화 출력 스키마도 이때만 `*_alt` 필드를 요구합니다.
+
 ## 카드 종류를 추가하려면
 
 1. `models.CARD_KINDS` 에 이름 추가
@@ -64,7 +80,8 @@ Google Fonts 에 있는 한글 서체여야 합니다 (오프라인 렌더링과
 - `test_models.py` — 직렬화, 슬러그, meta 정렬
 - `test_themes.py` — 색 유효성, 테마 자동 선택
 - `test_offline.py` — 주제 파싱(지역/음식/개수), 카드 구성 규칙
-- `test_content.py` — Claude 요청 모양과 응답 파싱 (가짜 클라이언트, 실제 호출 없음)
+- `test_content.py` — Claude 요청 모양과 응답 파싱, 언어별 스키마/프롬프트 (가짜 클라이언트)
+- `test_locales.py` — 언어팩 완결성, 라틴 서체 짝, 영어·따갈로그 폴백 생성기
 - `test_render.py` — HTML 생성, 이스케이프, 이미지 라우팅, 두 렌더러, rebuild
 
 크로미움이 없는 환경에서는 해당 테스트만 skip 됩니다.

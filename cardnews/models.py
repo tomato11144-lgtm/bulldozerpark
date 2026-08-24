@@ -12,6 +12,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .locales import meta_order
+
 # 카드 종류. 렌더러의 템플릿 이름과 1:1로 대응합니다.
 CARD_KINDS = (
     "cover",   # 표지 — 후킹 문구 + 대표 이미지
@@ -24,8 +26,9 @@ CARD_KINDS = (
     "outro",   # 마무리 — 저장 유도 CTA
 )
 
-# place 카드의 meta 에서 자주 쓰는 키(표시 순서 고정용).
-META_ORDER = ("위치", "대표메뉴", "가격대", "영업시간", "휴무", "주차", "웨이팅", "예약")
+# meta 표시 순서. 지원하는 모든 언어의 라벨을 표준 순서대로 늘어놓은 표라
+# 카드가 어떤 언어인지 몰라도 위치 -> 대표메뉴 -> 가격 순으로 정렬됩니다.
+META_ORDER = meta_order()
 
 
 def slugify(text: str) -> str:
@@ -43,6 +46,10 @@ class Card:
     title: str = ""
     subtitle: str = ""
     body: str = ""
+    # 이중 언어(en+tl)에서 아래에 한 줄 더 붙는 보조 언어 문구.
+    title_alt: str = ""
+    subtitle_alt: str = ""
+    body_alt: str = ""
     badge: str = ""              # 좌상단 라벨 (예: "BEST 3", "꿀팁 02")
     eyebrow: str = ""            # 제목 위 작은 문구
     bullets: list[str] = field(default_factory=list)
@@ -79,6 +86,7 @@ class CardNews:
     caption: str = ""                            # 인스타 본문 캡션
     hashtags: list[str] = field(default_factory=list)
     theme: str = "warm"
+    lang: str = "ko"
     handle: str = ""                             # @계정명 (푸터에 표기)
     source: str = ""                             # "claude" | "offline"
     notes: str = ""                              # 생성기가 남긴 메모/주의사항
