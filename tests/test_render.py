@@ -217,3 +217,30 @@ def test_rebuild_can_switch_language(tmp_path):
     write_sidecars(news, tmp_path, paths, [])
     result = rebuild(tmp_path / "cards.json", renderer="pillow", lang="en")
     assert result.news.lang == "en"
+
+
+def test_stock_photo_on_a_named_venue_is_marked_illustrative():
+    news = _intl_news()
+    place = next(c for c in news.cards if c.kind == "place")
+    place.title = "Wolhwa Galbi Tomas Morato"     # 실제 상호가 들어간 카드
+    attach_images(news, provider="gradient")
+    assert "illustrative" in place.footnote
+
+
+def test_placeholder_cards_are_not_marked():
+    news = _intl_news()
+    place = next(c for c in news.cards if c.kind == "place")
+    assert "{{" in place.title                     # 아직 자리표시자
+    attach_images(news, provider="gradient")
+    assert "illustrative" not in place.footnote
+
+
+def test_own_photos_are_not_marked_illustrative(tmp_path):
+    from PIL import Image
+
+    Image.new("RGB", (60, 80), "red").save(tmp_path / "kbbq.jpg")
+    news = _intl_news()
+    place = next(c for c in news.cards if c.kind == "place")
+    place.title = "Wolhwa Galbi Tomas Morato"
+    attach_images(news, provider="local", local_dir=tmp_path)
+    assert "illustrative" not in place.footnote

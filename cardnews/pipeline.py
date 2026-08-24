@@ -54,6 +54,30 @@ def _card_filename(index: int, kind: str) -> str:
     return f"{index:02d}_{kind}.png"
 
 
+# 실제 상호가 적힌 카드에 스톡/그라데이션 사진이 붙으면, 보는 사람은 그 가게의
+# 사진으로 읽습니다. 그건 사실이 아니므로 각주로 분명히 밝힙니다.
+ILLUSTRATIVE_SOURCES = ("unsplash", "pexels", "gradient")
+ILLUSTRATIVE_NOTE = {
+    "ko": "이미지는 이해를 돕기 위한 예시입니다",
+    "en": "Photo is illustrative, not the venue",
+    "tl": "Larawan ay halimbawa lang, hindi sa mismong resto",
+    "taglish": "Photo is illustrative lang, hindi actual sa resto",
+    "en+tl": "Photo is illustrative, not the venue",
+}
+
+
+def _mark_illustrative(card, source: str, lang: str) -> None:
+    """상호가 있는 카드 + 남의 사진 -> 각주 추가. 자리표시자 카드는 건너뜁니다."""
+    if card.kind not in ("place", "menu") or source not in ILLUSTRATIVE_SOURCES:
+        return
+    if not card.title or "{{" in card.title:
+        return
+    note = ILLUSTRATIVE_NOTE.get(lang, ILLUSTRATIVE_NOTE["en"])
+    if note in card.footnote:
+        return
+    card.footnote = f"{card.footnote} · {note}".strip(" ·")
+
+
 def attach_images(
     news: CardNews,
     *,
@@ -81,6 +105,7 @@ def attach_images(
             continue
         card.image = str(result.path)
         card.image_credit = result.credit
+        _mark_illustrative(card, result.source, news.lang)
         if result.credit and result.credit not in credits:
             credits.append(result.credit)
     return credits

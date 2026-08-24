@@ -170,6 +170,45 @@ cardnews "<주제>" [옵션]
 
 ---
 
+## 실제 매장 데이터 가져오기 (Google Places)
+
+구글 평점 순으로 매장을 뽑아 `--facts` 파일을 만듭니다. 상호·평점·리뷰 수·주소·
+영업시간·가격대만 가져옵니다 — 전부 Places API 가 공식으로 주는 사실 데이터입니다.
+
+```bash
+export GOOGLE_MAPS_API_KEY=...        # Places API (New) 활성화 필요
+python scripts/fetch_places.py "unlimited korean bbq samgyupsal" \
+    --area "Metro Manila" --region PH \
+    --top 5 --min-reviews 200 --include "Wolhwa Galbi" \
+    -o data/manila-kbbq.md
+
+cardnews "Manila K-BBQ best 5" --lang en+tl --facts data/manila-kbbq.md
+```
+
+`--min-reviews` 는 리뷰 3개짜리 별 5.0 이 1위로 올라오는 걸 막습니다.
+`--include` 로 지정한 상호는 순위와 무관하게 항상 포함됩니다.
+메뉴·한줄평은 API 가 주지 않으므로 `<<...>>` 로 비워둡니다 — 직접 채우세요.
+
+### 사진은 왜 안 가져오나
+
+구글 이미지 검색 결과도, Places API 의 매장 사진도 **매장·사진가·리뷰어의
+저작물**입니다. Google Maps Platform 약관은 지도 맥락 밖 재사용을 제한하고,
+남의 사진에 우리 계정 로고를 얹어 올리면 저작권 문제와 계정 신고 위험이 있습니다.
+그래서 이 도구는 사진을 자동으로 긁어오지 않습니다.
+
+쓸 수 있는 사진은 네 가지입니다.
+
+| 방법 | 명령 | 비고 |
+|---|---|---|
+| 직접 촬영 / 매장 제공 | `--images-dir photos/` | 가장 좋습니다 |
+| 매장 공식 계정 사진 | `--images-dir photos/` | 사용 허락을 받고 저장해서 쓰세요 |
+| 무료 스톡 (일반 K-BBQ 사진) | `--images unsplash` | 특정 매장 사진이 아닙니다 |
+| 사진 없이 타이포만 | `--images none` | 상호가 크게 들어가 오히려 깔끔합니다 |
+
+실제 상호가 적힌 카드에 스톡·그라데이션 이미지가 붙으면, 도구가 각주에
+"Photo is illustrative, not the venue" 를 자동으로 넣습니다. 보는 사람이 그 매장의
+사진으로 오해하지 않게 하기 위한 장치이니 지우지 마세요.
+
 ## 내 사진 쓰기
 
 스톡 사진보다 실제 가게 사진이 반응이 훨씬 좋습니다.
