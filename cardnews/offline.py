@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import re
 
+from .facts import parse_facts, sort_by_rating
+from .locales import META_FIELDS, get_locale
 from .models import Card, CardNews
 
 # 한글 음식 키워드 -> (표시용 이름, 영문 스톡 검색어, 추천 해시태그)
@@ -100,9 +102,14 @@ def build_offline(
     place_label = f"{region} {food_label}".strip()
 
     # cover + intro + place*n + tip + outro 로 카드 수를 맞춥니다.
+    venues = sort_by_rating(parse_facts(facts)) if mode == "facts" else []
+
     fixed = 4  # cover, intro, tip, outro
     if mode == "guide" or (looks_like_guide(topic) and not COUNT_RE.search(topic)):
         place_n = 0
+    elif venues:
+        place_n = len(venues)
+        card_count = min(12, max(card_count, place_n + fixed))
     else:
         # 주제에 "TOP 5" 처럼 개수가 박혀 있으면 그 수를 우선하고 카드 수를 늘립니다.
         place_n = max(1, detect_count(topic, min(3, max(1, card_count - fixed))))
@@ -131,9 +138,24 @@ def build_offline(
         ),
     ]
 
+    ko_labels = {key: get_locale("ko").meta_label(key) for key in META_FIELDS}
     for i in range(1, place_n + 1):
-        cards.append(
-            Card(
+        venue = venues[i - 1] if i <= len(venues) else None
+        if venue:
+            card = Card(
+                kind="place",
+                badge=f"{i:02d}",
+                title=venue.name,
+                subtitle=venue.get("verdict"),
+                body=venue.get("body"),
+                meta=venue.meta(ko_labels),
+                eyebrow=f"구글 {venue.get('rating')}" if venue.get("rating") else "",
+                footnote="평점·영업시간은 구글 기준 — 방문 전 다시 확인하세요",
+                image_query=f"{image_query} {i}",
+                image_keywords=[food_label, f"{i}"],
+            )
+        else:
+            card = Card(
                 kind="place",
                 badge=f"{i:02d}",
                 title=f"{{{{가게명{i}}}}}",
@@ -148,7 +170,7 @@ def build_offline(
                 image_keywords=[food_label, f"{i}"],
                 footnote="방문 전 영업시간 확인",
             )
-        )
+        cards.append(card)
 
     cards.append(
         Card(
@@ -182,9 +204,16 @@ def build_offline(
     if place_label:
         tags.append(place_label.replace(" ", ""))
 
-    notes_lines = ["카드에 남은 {{...}} 자리표시자를 실제 정보로 바꿔주세요."]
-    if mode == "facts" and facts.strip():
-        notes_lines.append("검증 자료가 있으면 --facts 로 넘겨 Claude 모드에서 자동 반영됩니다.")
+    if venues:
+        notes_lines = [
+            f"--facts 파일의 매장 {len(venues)}곳을 그대로 채웠습니다. 파일에 없는 정보는 넣지 않았습니다.",
+            "구글 평점은 계속 바뀝니다. 기준 시점을 함께 적거나 숫자를 빼세요.",
+        ]
+        missing = [v.name for v in venues if not v.get("signature")]
+        if missing:
+            notes_lines.append("대표메뉴가 비어 있는 곳: " + ", ".join(missing))
+    else:
+        notes_lines = ["카드에 남은 {{...}} 자리표시자를 실제 정보로 바꿔주세요."]
     if mode == "guide":
         notes_lines = ["가게를 나열하지 않는 가이드형 구성입니다."]
 

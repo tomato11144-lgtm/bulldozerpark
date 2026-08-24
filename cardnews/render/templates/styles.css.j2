@@ -216,3 +216,12 @@ h1, h2, h3 { font-family: var(--display); font-weight: var(--display-weight); }
   margin-bottom: 12px;
 }
 .alt--sub::before, .alt--title::before { display: none; }
+
+/* ---------- 사진 없이 정보만 있는 가게 카드 ---------- */
+.no-photo .body      { font-size: 38px; line-height: 1.55; margin-top: 34px; }
+.no-photo .meta      { margin-top: 44px; }
+.no-photo .meta-row  { padding: 28px 0; }
+.no-photo .meta-val  { font-size: 36px; }
+.no-photo .meta-key  { font-size: {{ 25 if script == 'latin' else 27 }}px; }
+.no-photo .sub       { font-size: 37px; }
+.no-photo .eyebrow   { font-size: 33px; }

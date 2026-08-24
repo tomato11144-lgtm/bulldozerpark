@@ -33,6 +33,11 @@ pipeline.write_sidecars()     cards.json / caption.txt / credits.txt / preview.h
 `offline.py` 가 같은 모양의 `CardNews` 를 만듭니다. 파이프라인 뒷단은
 문안이 어디서 왔는지 몰라도 됩니다 (`CardNews.source` 로 구분만 가능).
 
+**`--facts` 는 두 경로 모두에서 동작합니다.** Claude 경로는 원문을 프롬프트에
+그대로 넣고, 오프라인 경로는 `facts.parse_facts()` 로 `## 상호` + `- 키: 값` 을
+읽어 place 카드를 채웁니다. `<<...>>` 로 남은 값은 '아직 안 채움'으로 보고 버려서,
+비어 있는 항목이 카드에 나타나지 않습니다.
+
 **사실은 지어내지 않습니다.** 프롬프트의 모드 규칙(`prompts.MODE_RULES`)이
 가게 이름·가격·영업시간 생성을 막습니다. 검증 자료는 `--facts` 로만 들어옵니다.
 이 규칙을 완화하려면 `unverified` 모드를 쓰되 각주 표기가 함께 따라갑니다.

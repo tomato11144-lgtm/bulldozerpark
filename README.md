@@ -63,8 +63,22 @@ python -m cardnews "성수동 파스타 맛집 TOP 5"
 | `guide` | 특정 가게를 안 다룰 때 | 고르는 기준·메뉴 조합·방문 팁으로 채웁니다. 상호가 등장하지 않습니다 |
 | `unverified` | 초안만 급할 때 | 널리 알려진 예시를 쓰되 각주에 "정보 확인 필요" 를 붙입니다 |
 
-`--facts` 는 파일 경로나 문자열 둘 다 받습니다. 형식은 자유입니다
-(`examples/facts-sample.md` 참고).
+`--facts` 는 파일 경로나 문자열 둘 다 받습니다. 형식은 자유지만, 아래처럼 쓰면
+**API 키가 없어도** 오프라인 생성기가 매장 카드를 그대로 채웁니다.
+
+```markdown
+## 1. Sam Stew, Vertis North
+- Google rating: 4.9 (5,000 reviews)
+- Location: Vertis North, Quezon City
+- Price: ₱500-1,000
+- Signature: <<대표메뉴>>          ← << >> 는 '아직 안 채움'으로 보고 카드에서 뺍니다
+- One-line verdict: Highest rated on this list
+```
+
+`## 번호. 상호` 아래에 `- 키: 값` 을 적으면 됩니다. 키는 한글·영어 둘 다 됩니다
+(`위치`/`Location`, `가격대`/`Price`, `대표메뉴`/`Signature`, `한줄평`/`One-line verdict`).
+매장은 **평점 내림차순**으로 정렬되고, 파일에 없는 정보는 카드에 등장하지 않습니다.
+`## Notes for the writer` 같은 섹션은 매장으로 세지 않습니다.
 
 ```bash
 cardnews "우리 가게 겨울 신메뉴 3종" \

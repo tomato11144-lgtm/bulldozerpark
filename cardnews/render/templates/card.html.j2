@@ -1,7 +1,7 @@
 {#- 카드 한 장. kind 에 따라 레이아웃이 갈립니다. -#}
 {%- set has_photo = card.image_url -%}
 {%- set on_photo = card.kind in ('cover', 'quote', 'outro') and has_photo -%}
-<section class="card card--{{ card.kind }}" id="card-{{ loop_index }}"
+<section class="card card--{{ card.kind }}{{ ' no-photo' if card.kind in ('place', 'menu') and not has_photo else '' }}" id="card-{{ loop_index }}"
          data-kind="{{ card.kind }}" data-index="{{ loop_index }}">
 
   {%- if card.kind in ('cover', 'quote', 'outro') and has_photo %}

@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import re
 
-from .locales import Locale
+from .facts import parse_facts, sort_by_rating
+from .locales import META_FIELDS, Locale
 from .models import Card, CardNews
 
 # 음식 키워드 -> (표시명, 스톡 사진 검색어, 해시태그, 주문 팁)
@@ -137,9 +138,15 @@ def build_offline_intl(
     where = area or "the city"
     taglish = locale.code in ("taglish", "tl")
 
+    # --facts 를 줬으면 그 매장들이 목록이 됩니다.
+    venues = sort_by_rating(parse_facts(facts)) if mode == "facts" else []
+
     fixed = 4
     if mode == "guide" or (looks_like_guide(topic) and not COUNT_RE.search(topic)):
         place_n = 0
+    elif venues:
+        place_n = len(venues)
+        card_count = min(12, max(card_count, place_n + fixed))
     else:
         place_n = max(1, detect_count(topic, min(3, max(1, card_count - fixed))))
         card_count = min(12, max(card_count, place_n + fixed))
@@ -150,24 +157,46 @@ def build_offline_intl(
         _intro(area, food, where, image_query, locale, taglish),
     ]
 
+    labels = {key: locale.meta_label(key) for key in META_FIELDS}
     for i in range(1, place_n + 1):
-        cards.append(
-            Card(
+        venue = venues[i - 1] if i <= len(venues) else None
+        if venue:
+            card = Card(
+                kind="place",
+                badge=f"{i:02d}",
+                title=venue.name,
+                subtitle=venue.get("verdict"),
+                body=venue.get("body"),
+                meta=venue.meta(labels),
+                image_query=f"{image_query} {i}",
+                image_keywords=[food.lower(), str(i)],
+            )
+            if venue.get("rating"):
+                card.eyebrow = _tl(f"Google {venue.get('rating')}",
+                                   f"Google {venue.get('rating')}", locale)
+            card.footnote = _tl(
+                "Rating and hours as listed on Google — recheck before you go",
+                "Base sa Google ang rating at oras — i-check ulit bago pumunta",
+                locale,
+            )
+        else:
+            card = Card(
                 kind="place",
                 badge=f"{i:02d}",
                 title=f"{{{{VENUE {i}}}}}",
                 subtitle=f"{{{{ONE LINE VERDICT {i}}}}}",
                 body=f"{{{{WHY GO {i}}}}}",
                 meta={
-                    locale.meta_label("location"): f"{{{{LOCATION {i}}}}}",
-                    locale.meta_label("signature"): f"{{{{MUST ORDER {i}}}}}",
-                    locale.meta_label("price"): f"{{{{PRICE {i}}}}}",
+                    labels["location"]: f"{{{{LOCATION {i}}}}}",
+                    labels["signature"]: f"{{{{MUST ORDER {i}}}}}",
+                    labels["price"]: f"{{{{PRICE {i}}}}}",
                 },
-                footnote=_tl("Check hours before you go", "I-check ang oras bago pumunta", locale),
+                footnote=_tl("Check hours before you go",
+                             "I-check ang oras bago pumunta", locale),
                 image_query=f"{image_query} {i}",
                 image_keywords=[food.lower(), str(i)],
             )
-        )
+        cards.append(card)
 
     cards.append(
         Card(
@@ -187,7 +216,7 @@ def build_offline_intl(
     cards.append(_outro(handle, image_query, locale, taglish))
 
     tags = _hashtags(area, food, food_tags, locale)
-    notes = _notes(mode, locale)
+    notes = _notes(mode, locale, venues)
 
     title = (f"{area} {food} BEST {place_n}" if place_n and area
              else f"{food} in {area}" if area
@@ -351,9 +380,19 @@ def _hashtags(area, food, food_tags, locale) -> list[str]:
     return out[:18]
 
 
-def _notes(mode: str, locale: Locale) -> str:
+def _notes(mode: str, locale: Locale, venues: list | None = None) -> str:
     if mode == "guide":
         return "Guide-style set — no venues are named, so nothing needs verifying."
+    if venues:
+        missing = [v.name for v in venues if not v.get("signature")]
+        lines = [
+            f"{len(venues)} venues filled from your --facts file. "
+            "Nothing outside that file was added.",
+            "Google ratings drift — say when they were checked, or drop the numbers.",
+        ]
+        if missing:
+            lines.append("No must-order dish supplied for: " + ", ".join(missing))
+        return "\n".join(lines)
     return (
         "Replace every {{...}} placeholder with real, checked information before posting. "
         "Venue names, prices and hours were deliberately left blank so nothing is invented."

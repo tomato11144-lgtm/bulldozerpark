@@ -114,3 +114,111 @@ def test_area_and_food_reach_the_hashtags():
     assert "manilaeats" in lowered
     assert "samgyupsal" in lowered
     assert len(news.hashtags) == len(set(lowered))
+
+
+# --------------------------------------------------------------------------
+# --facts 파싱 (API 키 없이도 매장이 채워지는지)
+# --------------------------------------------------------------------------
+
+FACTS = """
+# Metro Manila K-BBQ
+
+## 1. Sam Stew, Vertis North
+- Google rating: 4.9 (5,000 reviews)
+- Location: Vertis North, Quezon City
+- Price: P500-1,000
+- Signature: <<대표메뉴>>
+- One-line verdict: Highest rated here
+
+## 2. Sariwon Korean Barbecue
+- 평점: 4.8 (2,700 reviews)
+- 위치: Makati City
+- 가격대: P500-3,000
+
+## Notes for the writer
+- 이 섹션은 매장이 아닙니다
+"""
+
+
+def test_parse_facts_reads_venues_and_skips_note_sections():
+    from cardnews.facts import parse_facts
+
+    venues = parse_facts(FACTS)
+    assert [v.name for v in venues] == ["Sam Stew, Vertis North", "Sariwon Korean Barbecue"]
+
+
+def test_parse_facts_accepts_korean_and_english_keys():
+    from cardnews.facts import parse_facts
+
+    sariwon = parse_facts(FACTS)[1]
+    assert sariwon.get("location") == "Makati City"
+    assert sariwon.get("price") == "P500-3,000"
+    assert sariwon.rating == 4.8
+
+
+def test_unfilled_placeholders_are_dropped():
+    from cardnews.facts import parse_facts
+
+    sam = parse_facts(FACTS)[0]
+    assert not sam.get("signature")        # <<대표메뉴>> 는 버려야 합니다
+    assert sam.get("verdict") == "Highest rated here"
+
+
+def test_sort_by_rating_puts_unrated_last():
+    from cardnews.facts import Venue, sort_by_rating
+
+    ordered = sort_by_rating([
+        Venue("low", {"rating": "4.5"}),
+        Venue("none", {"location": "x"}),
+        Venue("high", {"rating": "4.9"}),
+    ])
+    assert [v.name for v in ordered] == ["high", "low", "none"]
+
+
+def test_offline_fills_place_cards_from_facts():
+    from cardnews.locales import get_locale
+    from cardnews.offline_intl import build_offline_intl
+
+    news = build_offline_intl(
+        "Manila K-BBQ best 5", get_locale("en+tl"),
+        card_count=7, mode="facts", facts=FACTS,
+    )
+    places = [c for c in news.cards if c.kind == "place"]
+    assert [c.title for c in places] == ["Sam Stew, Vertis North", "Sariwon Korean Barbecue"]
+    assert "4.9" in places[0].eyebrow
+    assert places[0].meta["LOCATION / SAAN"] == "Vertis North, Quezon City"
+    # 파일에 없는 정보는 카드에도 없어야 합니다.
+    assert "MUST ORDER" not in places[0].meta
+    assert not any("{{" in c.title for c in places)
+
+
+def test_korean_offline_also_fills_from_facts():
+    from cardnews.offline import build_offline
+
+    news = build_offline("마닐라 K-BBQ TOP 5", card_count=7, mode="facts", facts=FACTS)
+    places = [c for c in news.cards if c.kind == "place"]
+    assert places[0].title == "Sam Stew, Vertis North"
+    assert places[0].meta["위치"] == "Vertis North, Quezon City"
+    assert "구글 평점" in news.notes or "구글" in news.notes
+
+
+def test_facts_notes_flag_missing_signatures():
+    from cardnews.locales import get_locale
+    from cardnews.offline_intl import build_offline_intl
+
+    news = build_offline_intl(
+        "Manila K-BBQ", get_locale("en"), card_count=7, mode="facts", facts=FACTS
+    )
+    assert "Sam Stew" in news.notes            # 대표메뉴가 비었다고 알려줘야 합니다
+    assert "2 venues filled" in news.notes
+
+
+def test_facts_ignored_outside_facts_mode():
+    from cardnews.locales import get_locale
+    from cardnews.offline_intl import build_offline_intl
+
+    news = build_offline_intl(
+        "Manila K-BBQ best 5", get_locale("en"),
+        card_count=7, mode="placeholder", facts=FACTS,
+    )
+    assert all("{{" in c.title for c in news.cards if c.kind == "place")
