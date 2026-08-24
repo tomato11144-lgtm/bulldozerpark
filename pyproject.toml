@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cardnews"
-version = "0.1.0"
-description = "F&B 인스타그램 카드뉴스 생성기 — 주제 한 줄로 카드 이미지와 캡션까지"
+name = "bulldozerpark"
+version = "0.2.0"
+description = "매장 마케팅 도구 모음 — 인스타 카드뉴스(cardnews) · 마케팅/매출 리포트 슬라이드(storeboard)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -24,12 +24,14 @@ dev = ["pytest>=7.4"]
 
 [project.scripts]
 cardnews = "cardnews.cli:main"
+storeboard = "storeboard.cli:main"
 
 [tool.setuptools]
-packages = ["cardnews", "cardnews.render"]
+packages = ["cardnews", "cardnews.render", "storeboard", "storeboard.render"]
 
 [tool.setuptools.package-data]
 "cardnews.render" = ["templates/*.j2"]
+"storeboard.render" = ["templates/*.j2"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

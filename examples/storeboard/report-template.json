@@ -1,0 +1,205 @@
+{
+  "_사용법": [
+    "이 파일을 채운 뒤 `storeboard build report.json` 을 실행하세요.",
+    "기간 표기: 주간 2026-W33 / 월간 2026-08 / 연간 2026 (전년 자료는 그 해로 적습니다)",
+    "금액은 원 단위 정수입니다. 모르는 값은 0 으로 두면 지표에서 빠집니다.",
+    "광고 채널 키: naver_sa, naver_gfa, naver_place, google_ads, google_pmax, youtube, meta, kakao, baemin, coupang_eats, influencer, other",
+    "유입 경로 키: search, map, ad, blog, sns, direct, other"
+  ],
+  "title": "직영점 주간 마케팅·매출 리포트",
+  "brand": "",
+  "period": "2026-W33",
+  "stores": [
+    "강남점",
+    "홍대점",
+    "판교점"
+  ],
+  "goal": {
+    "revenue": 0,
+    "roas": 0,
+    "ad_ratio": 0
+  },
+  "sales": [
+    {
+      "store": "강남점",
+      "period": "2026-W33",
+      "revenue": 0,
+      "orders": 0,
+      "customers": 0
+    },
+    {
+      "store": "강남점",
+      "period": "2026-W32",
+      "revenue": 0,
+      "orders": 0,
+      "customers": 0
+    },
+    {
+      "store": "강남점",
+      "period": "2025-W33",
+      "revenue": 0,
+      "orders": 0,
+      "customers": 0
+    },
+    {
+      "store": "홍대점",
+      "period": "2026-W33",
+      "revenue": 0,
+      "orders": 0,
+      "customers": 0
+    },
+    {
+      "store": "홍대점",
+      "period": "2026-W32",
+      "revenue": 0,
+      "orders": 0,
+      "customers": 0
+    },
+    {
+      "store": "홍대점",
+      "period": "2025-W33",
+      "revenue": 0,
+      "orders": 0,
+      "customers": 0
+    },
+    {
+      "store": "판교점",
+      "period": "2026-W33",
+      "revenue": 0,
+      "orders": 0,
+      "customers": 0
+    },
+    {
+      "store": "판교점",
+      "period": "2026-W32",
+      "revenue": 0,
+      "orders": 0,
+      "customers": 0
+    },
+    {
+      "store": "판교점",
+      "period": "2025-W33",
+      "revenue": 0,
+      "orders": 0,
+      "customers": 0
+    }
+  ],
+  "ads": [
+    {
+      "channel": "naver_sa",
+      "period": "2026-W33",
+      "store": "전체",
+      "spend": 0,
+      "impressions": 0,
+      "clicks": 0,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "channel": "naver_place",
+      "period": "2026-W33",
+      "store": "전체",
+      "spend": 0,
+      "impressions": 0,
+      "clicks": 0,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "channel": "meta",
+      "period": "2026-W33",
+      "store": "전체",
+      "spend": 0,
+      "impressions": 0,
+      "clicks": 0,
+      "conversions": 0,
+      "revenue": 0
+    },
+    {
+      "channel": "google_ads",
+      "period": "2026-W33",
+      "store": "전체",
+      "spend": 0,
+      "impressions": 0,
+      "clicks": 0,
+      "conversions": 0,
+      "revenue": 0
+    }
+  ],
+  "traffic": [
+    {
+      "store": "강남점",
+      "period": "2026-W33",
+      "views": 0,
+      "inflow": {
+        "search": 0,
+        "map": 0,
+        "ad": 0,
+        "blog": 0,
+        "direct": 0
+      },
+      "keywords": [
+        {
+          "term": "",
+          "count": 0
+        }
+      ],
+      "saves": 0,
+      "calls": 0,
+      "reservations": 0,
+      "directions": 0,
+      "reviews": 0,
+      "review_score": 0
+    },
+    {
+      "store": "홍대점",
+      "period": "2026-W33",
+      "views": 0,
+      "inflow": {
+        "search": 0,
+        "map": 0,
+        "ad": 0,
+        "blog": 0,
+        "direct": 0
+      },
+      "keywords": [
+        {
+          "term": "",
+          "count": 0
+        }
+      ],
+      "saves": 0,
+      "calls": 0,
+      "reservations": 0,
+      "directions": 0,
+      "reviews": 0,
+      "review_score": 0
+    },
+    {
+      "store": "판교점",
+      "period": "2026-W33",
+      "views": 0,
+      "inflow": {
+        "search": 0,
+        "map": 0,
+        "ad": 0,
+        "blog": 0,
+        "direct": 0
+      },
+      "keywords": [
+        {
+          "term": "",
+          "count": 0
+        }
+      ],
+      "saves": 0,
+      "calls": 0,
+      "reservations": 0,
+      "directions": 0,
+      "reviews": 0,
+      "review_score": 0
+    }
+  ],
+  "captures": [],
+  "notes": ""
+}

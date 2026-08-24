@@ -1,0 +1,16 @@
+{% import "slide.html.j2" as s with context %}<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ deck.title }} — {{ deck.period_label }}</title>
+{% if font_link %}<link rel="stylesheet" href="{{ font_link }}">{% endif %}
+<style>
+{{ font_faces }}
+{{ styles }}
+</style>
+</head>
+<body>
+{% for slide in slides %}{{ s.slide(slide, loop.index + index_offset, total, deck) }}{% endfor %}
+</body>
+</html>

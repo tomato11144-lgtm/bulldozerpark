@@ -1,0 +1,143 @@
+{% macro legend(items) %}
+<div class="legend">
+  {% for item in items %}
+  <span class="legend__item">
+    <span class="legend__swatch" style="background:{{ item.color }}"></span>
+    <span>{{ item.label }}</span>
+    {% if item.value %}<span class="legend__value">{{ item.value }}</span>{% endif %}
+  </span>
+  {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro table(head, rows, align) %}
+<table>
+  <thead><tr>
+    {% for cell in head %}
+    <th class="{{ 'right' if align and align[loop.index0] == 'right' else '' }}">{{ cell }}</th>
+    {% endfor %}
+  </tr></thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      {% for cell in row %}
+      <td class="{{ 'right' if align and align[loop.index0] == 'right' else '' }}">{{ cell }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
+{% macro block(b, nested=false) %}
+<div class="block block--{{ b.kind }} {{ '' if nested else 'col-' ~ b.span }}">
+  {% if b.title %}<h2 class="block__title">{{ b.title }}</h2>{% endif %}
+  {% if b.subtitle and b.kind != 'meter' %}<p class="block__sub">{{ b.subtitle }}</p>{% endif %}
+
+  {% if b.kind == 'group' %}
+  {% for child in b.children %}{{ block(child, true) }}{% endfor %}
+
+  {% elif b.kind == 'kpis' %}
+  <div class="kpis" style="grid-template-columns:repeat({{ b.kpis|length }},1fr)">
+    {% for k in b.kpis %}
+    <div class="kpi {{ 'kpi--hero' if loop.first else '' }}">
+      <div class="kpi__label">{{ k.label }}</div>
+      <div class="kpi__value"{% if k.value_color %} style="color:{{ k.value_color }}"{% endif %}>{{ k.value }}{% if k.unit %}<span class="kpi__unit">{{ k.unit }}</span>{% endif %}</div>
+      {% if k.delta or k.delta_note %}
+      <div class="kpi__delta" style="color:{{ k.delta_color }}">
+        {{ k.delta }}{% if k.delta_note %}<span class="kpi__note">{{ k.delta_note }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if k.hint %}<div class="kpi__hint">{{ k.hint }}</div>{% endif %}
+      {% if k.spark %}<div class="kpi__spark">{{ k.spark|safe }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {% elif b.kind == 'chart' and b.chart %}
+  <div class="chart">{{ b.chart.svg|safe }}</div>
+  {% if b.chart.legend %}{{ legend(b.chart.legend) }}{% endif %}
+  {% if b.chart.caption %}<p class="chart__caption">{{ b.chart.caption }}</p>{% endif %}
+
+  {% elif b.kind == 'meter' %}
+  <div class="meter__value">{{ b.text }}</div>
+  {% if b.chart %}<div class="chart">{{ b.chart.svg|safe }}</div>{% endif %}
+  {% if b.subtitle %}<p class="chart__caption">{{ b.subtitle }}</p>{% endif %}
+
+  {% elif b.kind == 'table' %}
+  {{ table(b.table_head, b.table_rows, b.table_align) }}
+
+  {% elif b.kind == 'callouts' %}
+  <div class="callouts">
+    {% for c in b.callouts %}
+    <div class="callout callout--{{ c.tone }}">
+      <div class="callout__title">
+        <span class="callout__mark">{{ marks[c.tone] }}</span><span>{{ c.title }}</span>
+      </div>
+      {% if c.body %}<div class="callout__body">{{ c.body }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {% elif b.kind == 'actions' %}
+  <div class="actions">
+    {% for a in b.actions %}
+    <div class="action">
+      <div class="action__no">{{ loop.index }}</div>
+      <div>
+        <div class="action__text">{{ a.text }}</div>
+        {% if a.owner or a.due %}
+        <div class="action__meta">
+          {% if a.owner %}<span class="chip">{{ a.owner }}</span>{% endif %}
+          {% if a.due %}<span class="chip">{{ a.due }}</span>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% elif b.kind == 'images' %}
+  <div class="shots">
+    {% for img in b.images %}
+    <figure class="shot">
+      <img src="{{ img.url }}" alt="{{ img.name }}">
+      <figcaption>{{ img.name }}</figcaption>
+    </figure>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <p class="block__body">{{ b.text }}</p>
+  {% endif %}
+
+  {% if b.footnote %}<p class="block__foot">{{ b.footnote }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro slide(s, index, total, deck) %}
+<section class="slide slide--{{ s.kind }}" id="card-{{ index }}" data-index="{{ index }}">
+  {% if s.kind == 'cover' %}
+    <div class="slide__head">
+      {% if s.eyebrow %}<div class="eyebrow">{{ s.eyebrow }}</div>{% endif %}
+      <h1 class="slide__title">{{ s.title }}</h1>
+      <p class="slide__sub">{{ s.subtitle }}</p>
+      <div class="cover__rule"></div>
+      {% for b in s.blocks %}<p class="cover__meta">{{ b.text }}</p>{% endfor %}
+    </div>
+  {% else %}
+    <header class="slide__head">
+      {% if s.eyebrow %}<div class="eyebrow">{{ s.eyebrow }}</div>{% endif %}
+      <h1 class="slide__title">{{ s.title }}</h1>
+      {% if s.subtitle %}<p class="slide__sub">{{ s.subtitle }}</p>{% endif %}
+    </header>
+    <div class="grid">
+      {% for b in s.blocks %}{{ block(b) }}{% endfor %}
+    </div>
+  {% endif %}
+  <footer class="slide__foot">
+    <span>{{ s.footnote or (deck.brand ~ ' · ' ~ deck.period_label if deck.brand else deck.period_label) }}</span>
+    <span>{{ index }} / {{ total }}</span>
+  </footer>
+</section>
+{% endmacro %}

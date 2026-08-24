@@ -1,3 +1,63 @@
+# bulldozerpark — 매장 마케팅 도구 모음
+
+| 도구 | 무엇을 | 문서 |
+|---|---|---|
+| **cardnews** | 주제 한 줄 → 인스타 카드뉴스 이미지 + 캡션 | 아래 |
+| **storeboard** | 매출·유입·광고 리포트 캡처 → 보고용 16:9 슬라이드(PDF·PNG) | [docs/storeboard.md](docs/storeboard.md) |
+
+```bash
+cardnews "성수동 파스타 맛집 TOP 5" --handle @bulldozer.eats
+storeboard report shots/ --period 2026-W33 --brand 불도저파크
+```
+
+---
+
+# storeboard — 매장 마케팅·매출 리포트 슬라이드
+
+주간/월간/작년 **매출표 · 네이버 플레이스 유입 리포트 · 광고 리포트(네이버·구글·메타…)
+캡처를 넣으면** 보고 자리에 그대로 띄우는 슬라이드로 정리해 줍니다.
+
+```bash
+storeboard sample                                            # 키 없이 모양부터 보기
+storeboard report shots/ --period 2026-W33 --brand 불도저파크   # 캡처 → 슬라이드
+```
+
+```
+out/직영점-주간-마케팅매출-리포트-2026-W33/
+├── slides/01_cover.png … 09_appendix.png   ← PPT·메신저에 그대로
+├── deck.pdf        ← 보고용 (슬라이드당 한 쪽)
+├── deck.html       ← 브라우저 미리보기
+├── report.json     ← 판독된 원본. 고쳐서 다시 빌드
+└── summary.txt     ← 단톡방에 붙이는 텍스트 요약
+```
+
+**슬라이드 구성** — 한 장 = 한 질문. 데이터가 없는 장은 만들지 않습니다.
+
+| # | 슬라이드 | 답하는 질문 |
+|---|---|---|
+| 1 | 표지 | 누구의 · 언제 실적인가 |
+| 2 | 한눈에 | 이번 기간 결론은 (매출 · 전년비 · 객단가 · 광고비율 · ROAS · 목표 달성률) |
+| 3 | 매출 추이 | 흐름이 좋아지고 있나 (전년 동기 겹쳐보기) |
+| 4 | 매장별 | 어디가 끌고 어디가 빠졌나 |
+| 5 | 채널 효율 | 광고비를 어디에 썼고 무엇이 남았나 |
+| 6 | 광고 퍼널 | 어느 단계에서 새고 있나 |
+| 7 | 네이버 유입 | 찾아온 사람이 행동으로 이어졌나 |
+| 8 | 인사이트·액션 | 다음 기간에 무엇을 할 것인가 (담당·기한 포함) |
+| 9 | 부록 | 원본 캡처 · 읽지 못한 항목 |
+
+세 가지 원칙을 지킵니다.
+
+- **없는 숫자는 지어내지 않습니다.** 캡처에서 못 읽은 항목은 비워 두고
+  "확인 필요"로 부록에 올립니다. 비교 기간 자료가 없으면 0%가 아니라 `—` 입니다.
+- **원본은 하나입니다.** `report.json` 만 고치면 모든 슬라이드의 숫자가 함께 바뀝니다
+  (지표는 저장하지 않고 빌드할 때마다 다시 계산합니다).
+- **API 키가 없어도 끝까지 돕니다.** 캡처 판독만 키가 필요하고,
+  손으로 채운 데이터(`storeboard template`)면 코멘트까지 규칙 기반으로 만듭니다.
+
+자세한 사용법 · 지표 정의 · `report.json` 스펙 → **[docs/storeboard.md](docs/storeboard.md)**
+
+---
+
 # cardnews — F&B 인스타그램 카드뉴스 생성기
 
 주제 한 줄을 주면 **문안 · 사진 · 업로드용 카드 이미지 · 인스타 캡션**까지 한 번에 만듭니다.
@@ -31,9 +91,13 @@ python scripts/fetch_fonts.py      # 한글 폰트 내려받기 (한 번만)
 
 python -m cardnews doctor          # 환경 점검
 python -m cardnews "성수동 파스타 맛집 TOP 5"
+
+python -m storeboard doctor        # 리포트 도구 환경 점검
+python -m storeboard sample        # 데모 덱 한 부 만들어 보기
 ```
 
-`pip install -e .` 를 하면 `python -m cardnews` 대신 `cardnews` 명령으로 쓸 수 있습니다.
+`pip install -e .` 를 하면 `python -m cardnews` / `python -m storeboard` 대신
+`cardnews`, `storeboard` 명령으로 쓸 수 있습니다.
 
 ### API 키 (선택)
 
@@ -41,7 +105,7 @@ python -m cardnews "성수동 파스타 맛집 TOP 5"
 
 | 키 | 없으면 | 있으면 |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | 규칙 기반 템플릿으로 뼈대를 만듭니다 | Claude 가 주제에 맞는 문안을 씁니다 |
+| `ANTHROPIC_API_KEY` | 규칙 기반 템플릿으로 뼈대를 만듭니다 (storeboard 는 캡처 판독만 불가) | Claude 가 문안을 쓰고, storeboard 는 캡처를 읽습니다 |
 | `UNSPLASH_ACCESS_KEY` 또는 `PEXELS_API_KEY` | 테마 색 그라데이션 배경 | 주제에 맞는 무료 스톡 사진 |
 
 키가 하나도 없어도 끝까지 동작합니다. 키 없이 먼저 돌려보고 결과 형태를 확인한 뒤
@@ -327,6 +391,17 @@ cardnews/
     ├── chromium.py  HTML → PNG (기본)
     ├── pillow.py    PNG 직접 그리기 (대체)
     └── templates/   Jinja2 템플릿 + CSS
+
+storeboard/          매출·마케팅 리포트 슬라이드 (docs/storeboard.md 참고)
+├── cli.py           report / extract / build / sample / template / doctor
+├── pipeline.py      report.json → 슬라이드 · PDF · 요약
+├── extract.py       캡처 이미지 → 구조화 데이터 (Claude 비전)
+├── periods.py       기간 표기 한 가지 규칙 (WoW / YoY 계산의 근거)
+├── metrics.py       파생 지표 (증감 · ROAS · CPA · 행동 전환율)
+├── insights.py      코멘트·액션 (규칙 기반 + Claude)
+├── charts.py        인라인 SVG 차트
+├── deck.py          지표 → 슬라이드 구성
+└── render/          덱 → HTML → PNG · PDF
 ```
 
 테스트: `python -m pytest tests -q`
