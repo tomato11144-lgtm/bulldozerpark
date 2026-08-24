@@ -154,16 +154,16 @@ tbody td:first-child { font-weight: 500; }
 .slide--cover {
   background: {{ t.RAMP[700] }};
   color: #fff;
-  justify-content: center;
   padding: 96px 110px;
 }
+/* 제목 묶음은 위아래 auto 여백으로 가운데에, 꼬리말은 그대로 바닥에 둡니다. */
+.slide--cover .slide__head { margin: auto 0; }
 .slide--cover .eyebrow { color: {{ t.RAMP[200] }}; }
 .slide--cover .slide__title { font-size: 76px; line-height: 1.18; letter-spacing: -.02em; }
 .slide--cover .slide__sub { color: {{ t.RAMP[150] }}; font-size: 30px; margin-top: 18px; }
 .slide--cover .cover__meta { font-size: 21px; color: {{ t.RAMP[200] }}; margin-top: 44px; }
-/* 표지는 가운데 정렬이라 꼬리말이 본문 바로 밑에 붙습니다. 아래로 밀어 둡니다. */
 .slide--cover .slide__foot {
-  margin-top: auto; border-top-color: rgba(255,255,255,.18); color: {{ t.RAMP[200] }};
+  border-top-color: rgba(255,255,255,.18); color: {{ t.RAMP[200] }};
 }
 .cover__rule { width: 96px; height: 5px; background: {{ t.RAMP[300] }}; border-radius: 3px; margin: 34px 0 0; }
 
