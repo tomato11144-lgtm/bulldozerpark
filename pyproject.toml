@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bulldozerpark"
+version = "0.2.0"
+description = "매장 마케팅 도구 모음 — 인스타 카드뉴스(cardnews) · 마케팅/매출 리포트 슬라이드(storeboard)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "Jinja2>=3.1",
+    "Pillow>=10.0",
+]
+
+[project.optional-dependencies]
+# 크로미움 HTML 렌더러 (디자인 품질이 가장 좋습니다)
+render = ["playwright>=1.40"]
+# 주제 -> 문안 자동 작성
+llm = ["anthropic>=1.0"]
+all = ["playwright>=1.40", "anthropic>=1.0"]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+cardnews = "cardnews.cli:main"
+storeboard = "storeboard.cli:main"
+
+[tool.setuptools]
+packages = ["cardnews", "cardnews.render", "storeboard", "storeboard.render"]
+
+[tool.setuptools.package-data]
+"cardnews.render" = ["templates/*.j2"]
+"storeboard.render" = ["templates/*.j2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

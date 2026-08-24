@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>{{ news.title }}</title>
+{%- if font_link %}
+<link rel="stylesheet" href="{{ font_link }}">
+{%- endif %}
+<style>
+{{ font_faces|safe }}
+{{ styles|safe }}
+</style>
+</head>
+<body>
+<div class="deck">
+{%- for card in cards %}
+{%- set loop_index = loop.index + (index_offset or 0) %}
+{% include "card.html.j2" with context %}
+{%- endfor %}
+</div>
+</body>
+</html>
