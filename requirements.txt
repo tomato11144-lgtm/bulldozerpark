@@ -1,0 +1,15 @@
+# --- 필수 ---
+Jinja2>=3.1
+
+# --- 렌더링 백엔드 ---
+# Pillow: 순수 파이썬 PNG 렌더러(브라우저 없이 동작하는 대체 백엔드)
+Pillow>=10.0
+# Playwright: 크로미움 HTML→PNG 렌더러(기본, 디자인 품질이 가장 좋음)
+#   설치 후 `playwright install chromium` 한 번 실행 필요
+playwright>=1.40
+
+# --- 선택 ---
+# 주제 → 카드 문안 자동 작성 (없으면 템플릿 기반 오프라인 생성기로 폴백)
+anthropic>=1.0
+# 무료 스톡 사진 API 호출용
+requests>=2.31

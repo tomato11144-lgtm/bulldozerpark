@@ -1,0 +1,29 @@
+# 주제 예시 모음 — 그대로 복사해서 쓰세요.
+# 실행: cardnews "<주제>" --handle @내계정
+
+# 지역 + 카테고리 리스트형 (가장 반응이 좋은 형식)
+성수동 파스타 맛집 TOP 5
+연남동 혼밥하기 좋은 곳 5
+서면 늦게까지 하는 술집 6
+
+# 정보 가이드형 (특정 가게를 나열하지 않아 사실 확인 부담이 적습니다)
+국밥집 처음 갈 때 뭘 시켜야 할까
+와인 안주 페어링 총정리
+오마카세 처음 가는 사람이 알아야 할 것
+
+# 우리 가게 홍보형 (--facts 와 --images-dir 를 같이 쓰세요)
+우리 가게 겨울 신메뉴 3종 소개
+사장님이 직접 고른 이번 주 추천 메뉴
+
+# 시즌/이벤트형
+장마철에 생각나는 뜨끈한 국물 요리
+연말 회식 장소 고르는 기준
+
+# --- 해외 / 필리핀 계정 (--lang 필요) ---
+# cardnews "<주제>" --lang en+tl --theme neon --handle @your.account
+
+Manila K-BBQ best 5
+Best unli samgyup in BGC
+Where to eat in Poblacion after 10pm
+Quezon City milk tea spots worth the queue
+How to pick a K-BBQ place without wasting a night
