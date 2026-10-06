@@ -1,0 +1,1968 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GEO 운영 콘솔 — AI 답변 노출 측정·공식 글·외부 출처 관리</title>
+<meta name="description" content="AI 답변에 우리 매장이 나오는지 매달 측정하고, 인용 출처 집계·확인된 정보 기반 공식 글 제작·외부 출처 점검·월간 리포트를 관리하는 마케팅팀 내부 도구">
+<meta name="theme-color" content="#5146e0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%235146e0'/%3E%3Cstop offset='1' stop-color='%23c04ad8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-size='30' font-family='Arial' font-weight='700' fill='white' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f4f5fa;--surface:#fff;--surface-2:#f8f9fd;--line:#e4e7f0;--line-2:#eef0f6;
+  --text:#1a1d2b;--muted:#5f6680;--faint:#8a90a6;
+  --pri:#5146e0;--pri-2:#7c4dea;--pri-soft:#eeedfd;
+  --grad:linear-gradient(135deg,#5146e0 0%,#7c4dea 55%,#c04ad8 100%);
+  --ok:#0f7a55;--ok-bg:#e2f5ec;--warn:#a85100;--warn-bg:#fff1df;--err:#c42b3b;--err-bg:#fde8ea;--info:#2458d6;--info-bg:#e7eefe;
+  --r:16px;--r-sm:10px;
+  --sh:0 1px 2px rgba(20,22,40,.04),0 6px 20px -8px rgba(30,32,70,.12);
+  --sh-lg:0 24px 60px -20px rgba(30,30,80,.35);
+  --side:248px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Segoe UI",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:anywhere}
+body.noscroll{overflow:hidden}
+a{color:var(--pri)}
+.app{display:grid;grid-template-columns:var(--side) minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:0;height:100vh;overflow:auto;background:linear-gradient(180deg,#fff,#fbfbff);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 8px}
+.logo{width:40px;height:40px;border-radius:12px;background:var(--grad);color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px;box-shadow:0 8px 20px -8px #5146e0aa;flex:none}
+.logo.sm{width:32px;height:32px;border-radius:10px;font-size:15px}
+.brand-name{font-weight:800;letter-spacing:-.02em}
+.brand-sub{font-size:13px;color:var(--muted)}
+.side-nav{display:flex;flex-direction:column;gap:2px}
+.side-nav a{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border-radius:12px;color:var(--muted);text-decoration:none;font-weight:600;transition:background .15s,color .15s}
+.side-nav a:hover{background:var(--surface-2);color:var(--text)}
+.side-nav a.on{background:var(--pri-soft);color:var(--pri)}
+.side-nav a .badge{margin-left:auto}
+.side-foot{margin-top:auto;padding:0 6px}
+.topbar{display:none}
+.main{max-width:1240px;margin:0 auto;padding:28px 32px 64px;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+.bottom{display:none}
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{display:none}
+  .topbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20;background:rgba(255,255,255,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:10px 14px}
+  .top-title{font-weight:800;flex:1;min-width:0}
+  .main{padding:18px 14px 110px}
+  .bottom{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,255,255,.95);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .bottom a,.bottom button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;color:var(--faint);text-decoration:none;font-size:12px;font-weight:700;background:none;border:0;font-family:inherit;cursor:pointer;border-radius:12px}
+  .bottom .on{color:var(--pri)}
+}
+/* typography & layout */
+.page-head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 20px;margin-bottom:20px}
+.page-head .titles{flex:1 1 280px;min-width:0}
+h1{font-size:28px;line-height:1.25;letter-spacing:-.03em;margin:0}
+.sub{color:var(--muted);margin:4px 0 0}
+h2{font-size:19px;letter-spacing:-.02em;margin:0 0 12px;line-height:1.35}
+h3{font-size:16px;margin:0 0 8px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:20px;margin-bottom:16px;min-width:0}
+.card-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:12px}
+.card-head h2{margin:0;flex:1 1 auto}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.grid2>.card{margin-bottom:0}
+.stack-gap>*+*{margin-top:16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;margin-bottom:16px}
+.kpi{position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh);color:inherit;text-decoration:none;display:block;transition:transform .15s,box-shadow .2s}
+a.kpi:hover{transform:translateY(-2px);box-shadow:var(--sh-lg)}
+.kpi .label{color:var(--muted);font-weight:650;font-size:14px}
+.kpi .val{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.2;margin:6px 0 6px}
+.kpi .val small{font-size:16px;color:var(--muted);font-weight:650}
+.kpi::after{content:"";position:absolute;right:-40px;bottom:-60px;width:140px;height:140px;border-radius:50%;background:var(--grad);opacity:.07}
+.hero{background:var(--grad);color:#fff;border:0;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;right:-80px;top:-80px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.12)}
+.hero::after{content:"";position:absolute;right:60px;bottom:-120px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero>*{position:relative;z-index:1}
+.hero .sub,.hero .muted{color:rgba(255,255,255,.85)}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.nowrap{white-space:nowrap}
+.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:14px}
+.pre{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;max-height:340px;overflow:auto;font-size:15px;margin:0}
+mark{background:#ffe27a;border-radius:4px;padding:0 2px;color:inherit}
+hr{border:0;border-top:1px solid var(--line-2);margin:16px 0}
+.empty{text-align:center;padding:36px 16px;color:var(--muted)}
+.empty .big{font-size:40px;line-height:1;margin-bottom:8px;opacity:.8}
+.spacer{flex:1}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--text);font:inherit;font-weight:650;cursor:pointer;text-decoration:none;transition:transform .12s,box-shadow .15s,background .15s,border-color .15s,filter .15s;white-space:nowrap;line-height:1.2}
+.btn:hover{border-color:#cfd3e2;box-shadow:0 4px 12px -6px rgba(30,30,80,.25)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 8px 20px -10px #5146e0}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.soft{background:var(--pri-soft);border-color:transparent;color:var(--pri)}
+.btn.danger{color:var(--err);border-color:#f3c7cc}
+.btn.ghost{background:transparent;border-color:transparent;box-shadow:none}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.icon{width:44px;padding:0;flex:none}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;transform:none;filter:grayscale(.3)}
+.btn.block{width:100%}
+.hero .btn{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff}
+.hero .btn.white{background:#fff;color:var(--pri)}
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:999px;font-size:14px;font-weight:700;line-height:1.6;white-space:nowrap;background:#eef0f5;color:var(--muted)}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}
+.badge.warn{background:var(--warn-bg);color:var(--warn)}
+.badge.err{background:var(--err-bg);color:var(--err)}
+.badge.info{background:var(--info-bg);color:var(--info)}
+.badge.pri{background:var(--pri-soft);color:var(--pri)}
+.badge.dot::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+/* forms */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;min-width:0}
+.field>label{font-weight:650;font-size:15px}
+input[type=text],input[type=date],input[type=number],input[type=url],input[type=search],input:not([type]),select,textarea{width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);font:inherit;font-size:16px;color:var(--text);background:#fff;transition:border-color .15s,box-shadow .15s;min-width:0}
+textarea{resize:vertical;line-height:1.6}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 4px #5146e01f}
+.check{display:inline-flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;font-weight:550}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--pri);flex:none;margin:0}
+.checks{display:flex;flex-wrap:wrap;gap:0 18px}
+.hint{color:var(--muted);font-size:14px}
+.req{color:var(--err)}
+.err-msg{color:var(--err);font-weight:650;margin:0}
+.frow{display:flex;flex-wrap:wrap;gap:0 12px;align-items:flex-end}
+.frow>.field{flex:1 1 180px}
+.frow>.btn{margin-bottom:14px}
+/* chips & tags */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:#fff;font:inherit;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text)}
+.chip:hover{border-color:#c9c4f7}
+.chip.on{background:var(--pri-soft);border-color:#c9c4f7;color:var(--pri)}
+.chip.on::before{content:"✓";font-weight:800}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.tag{display:inline-flex;align-items:center;gap:2px;padding:3px 4px 3px 12px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);font-size:15px;font-weight:550;max-width:100%}
+.tag button{border:0;background:none;min-width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--muted);font:inherit}
+.tag button:hover{background:#e9ebf3;color:var(--text)}
+.pill{display:inline-block;padding:1px 8px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);font-size:14px;margin:2px 4px 2px 0}
+/* tables */
+.table-wrap{overflow-x:auto}
+table.t{width:100%;border-collapse:separate;border-spacing:0;font-size:16px}
+.t th{text-align:left;font-size:14px;color:var(--muted);font-weight:700;padding:10px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+.t th:first-child{border-top-left-radius:10px}.t th:last-child{border-top-right-radius:10px}
+.t td{padding:10px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+.t tbody tr:hover td{background:#fafbff}
+.t .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.t td select{min-width:110px}
+@media (max-width:760px){
+  .t.stack thead{display:none}
+  .t.stack,.t.stack tbody,.t.stack tr,.t.stack td{display:block;width:100%}
+  .t.stack tr{border:1px solid var(--line);border-radius:14px;margin-bottom:12px;padding:6px 14px;background:#fff;box-shadow:var(--sh)}
+  .t.stack tbody tr:hover td{background:none}
+  .t.stack td{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px dashed var(--line-2);padding:8px 0;text-align:right}
+  .t.stack td:last-child{border-bottom:0}
+  .t.stack td::before{content:attr(data-label);font-weight:700;color:var(--muted);font-size:14px;text-align:left;flex:none;max-width:42%}
+  .t.stack td>*:not(:first-child){margin-left:0}
+  .t.stack td.mc{display:block;text-align:left}
+  .t.stack td.mc::before{display:none}
+  .t.stack td.num{white-space:normal}
+  .t.stack td .cell,.t.stack td .scell{width:58%;min-width:0}
+  .t.stack td select{width:58%;min-width:0}
+  .table-wrap{overflow:visible}
+}
+/* progress */
+.bar{height:10px;border-radius:999px;background:#eceef6;overflow:hidden;min-width:60px}
+.bar>span{display:block;height:100%;background:var(--grad);border-radius:inherit;transition:width .5s ease}
+.bar.ok>span{background:linear-gradient(90deg,#14a06f,#3cc68f)}
+.hero .bar{background:rgba(255,255,255,.25)}.hero .bar>span{background:#fff}
+.meter{display:flex;align-items:center;gap:10px}
+.meter .bar{flex:1}
+.meter b{min-width:56px;text-align:right;font-variant-numeric:tabular-nums}
+/* notices */
+.notice{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;padding:14px 16px;border-radius:14px;border:1px solid;margin-bottom:16px}
+.notice .grow{flex:1 1 240px}
+.notice.info{background:var(--info-bg);border-color:#cfdcfb;color:#1d3f99}
+.notice.warn{background:var(--warn-bg);border-color:#fbd9ad;color:#7a3b00}
+.notice.err{background:var(--err-bg);border-color:#f6c5cb;color:#8f1d2b}
+.notice.ok{background:var(--ok-bg);border-color:#bfe6d3;color:#0b5c40}
+.notice ul{margin:6px 0 0;padding-left:20px}
+/* modal & toast */
+.modal-back{position:fixed;inset:0;z-index:100;background:rgba(18,20,40,.42);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:#fff;border-radius:20px;box-shadow:var(--sh-lg);width:min(580px,100%);max-height:calc(100vh - 40px);display:flex;flex-direction:column;animation:pop .2s cubic-bezier(.2,.9,.3,1.15)}
+.modal.wide{width:min(920px,100%)}
+.modal-head{display:flex;align-items:center;gap:8px;padding:16px 16px 8px 20px}
+.modal-head h2{flex:1;margin:0}
+.modal-body{padding:8px 20px 16px;overflow:auto}
+.modal-foot{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;padding:12px 20px 16px;border-top:1px solid var(--line-2)}
+@media (max-width:600px){.modal-back{padding:0;align-items:flex-end}.modal,.modal.wide{border-radius:20px 20px 0 0;max-height:94vh;width:100%}.modal-foot .btn{flex:1 1 auto}}
+#toast-root{position:fixed;z-index:200;left:50%;transform:translateX(-50%);bottom:24px;display:flex;flex-direction:column;gap:8px;align-items:center;width:min(560px,calc(100% - 24px));pointer-events:none}
+.toast{background:#1d2033;color:#fff;padding:12px 18px;border-radius:14px;box-shadow:var(--sh-lg);font-weight:600;animation:pop .2s;pointer-events:auto;transition:all .3s}
+.toast.err{background:var(--err)}.toast.warn{background:#9a4b00}
+.toast.out{opacity:0;transform:translateY(8px)}
+@media (max-width:900px){#toast-root{bottom:92px}}
+/* round grid cells */
+.cell,.scell{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;width:100%;min-width:128px;min-height:58px;padding:8px 10px;border-radius:12px;border:1.5px dashed #d3d7e4;background:#fff;font:inherit;cursor:pointer;text-align:left;transition:all .15s;color:var(--text)}
+.cell:hover,.scell:hover{border-color:var(--pri);transform:translateY(-1px);box-shadow:var(--sh)}
+.cell.got{border-style:solid;border-color:#d9dcf0;background:var(--surface-2)}
+.cell.done{border-style:solid;border-color:#bfe6d3;background:#f4fbf8}
+.cell .st,.scell .st{font-size:13px;font-weight:700;color:var(--muted)}
+.cell .badge,.scell .badge{font-size:13px;padding:1px 8px}
+.qtext{font-weight:650}
+.qmeta{color:var(--muted);font-size:14px}
+.copy-row{display:flex;align-items:flex-start;gap:6px}
+.copy-row .qtext{flex:1;min-width:0;padding-top:10px}
+/* article editor */
+.art-layout{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:16px;align-items:start}
+.art-side{position:sticky;top:16px}
+@media (max-width:1100px){.art-layout{grid-template-columns:minmax(0,1fr)}.art-side{position:static}}
+.step-num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--grad);color:#fff;font-weight:800;font-size:14px;margin-right:8px;flex:none}
+.sec{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;background:var(--surface-2)}
+.sec-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.sec-head b{flex:1}
+.check-item{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font:inherit;cursor:pointer;margin-bottom:8px;transition:all .15s;color:var(--text)}
+.check-item:hover{border-color:var(--pri)}
+.check-item.err{border-color:#f6c5cb;background:#fff8f9}
+.check-item.warn{border-color:#fbd9ad;background:#fffbf5}
+.preview-frame{width:100%;height:640px;border:1px solid var(--line);border-radius:14px;background:#fff;display:block;margin:0 auto;transition:width .3s}
+.preview-frame.mobile{width:375px;max-width:100%}
+.hl-box{white-space:pre-wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;max-height:420px;overflow:auto}
+.timeline{list-style:none;margin:0;padding:0}
+.timeline li{position:relative;padding:0 0 12px 20px;font-size:14px}
+.timeline li::before{content:"";position:absolute;left:4px;top:8px;width:8px;height:8px;border-radius:50%;background:var(--pri)}
+.timeline li::after{content:"";position:absolute;left:7.5px;top:18px;bottom:0;width:1px;background:var(--line)}
+.timeline li:last-child::after{display:none}
+/* cycle steps */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:10px}
+.step{display:block;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--surface-2);text-decoration:none;color:inherit;transition:all .15s}
+.step:hover{border-color:#c9c4f7;background:#fff;transform:translateY(-2px)}
+.step .n{font-size:13px;font-weight:800;color:var(--pri)}
+.step b{display:block;margin:2px 0}
+.step.done{background:#f4fbf8;border-color:#bfe6d3}.step.done .n{color:var(--ok)}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line-2)}
+.list li:last-child{border-bottom:0}
+.list li .grow{flex:1 1 200px;min-width:0}
+.more-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.more-grid a{display:flex;align-items:center;gap:10px;min-height:56px;padding:0 14px;border-radius:14px;border:1px solid var(--line);text-decoration:none;color:var(--text);font-weight:700}
+.delta.up{color:var(--ok);font-weight:700}.delta.down{color:var(--err);font-weight:700}
+.sticky-bar{position:sticky;top:8px;z-index:5}
+@media (max-width:900px){.sticky-bar{top:62px}}
+.report-doc h2{margin-top:8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side" aria-label="주 메뉴"></aside>
+  <div class="main-wrap" style="min-width:0">
+    <header class="topbar" id="topbar"></header>
+    <main id="main" class="main"><div class="empty"><div class="big">⏳</div>불러오는 중…</div></main>
+  </div>
+</div>
+<nav class="bottom" id="bottom" aria-label="하단 메뉴"></nav>
+<div id="modal-root"></div>
+<div id="toast-root" aria-live="polite"></div>
+<input type="file" id="restore-file" accept="application/json,.json" hidden>
+<script>
+'use strict';
+/* =========================================================
+   GEO 운영 콘솔 v0.2 — 단일 파일 앱 (외부 라이브러리 없음)
+   ========================================================= */
+
+/* ---------- 공통 유틸 ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = (p = '') => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const KST = 'Asia/Seoul';
+const fmtD = new Intl.DateTimeFormat('en-CA', { timeZone: KST, year: 'numeric', month: '2-digit', day: '2-digit' });
+const fmtDTf = new Intl.DateTimeFormat('ko-KR', { timeZone: KST, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+const today = () => fmtD.format(new Date());
+const nowISO = () => new Date().toISOString();
+const fmtDate = s => !s ? '' : (/^\d{4}-\d{2}-\d{2}$/.test(s) ? s : fmtD.format(new Date(s)));
+const fmtDT = s => s ? fmtDTf.format(new Date(s)) : '';
+const daysBetween = (a, b) => Math.round((Date.parse(fmtDate(b)) - Date.parse(fmtDate(a))) / 86400000);
+const pct = (n, d) => d ? Math.round(n / d * 1000) / 10 : null;
+const pctTxt = (n, d) => d ? `${pct(n, d)}%` : '—';
+const norm = s => String(s || '').toLowerCase();
+const compact = s => norm(s).replace(/\s+/g, '');
+const won = n => Number(n).toLocaleString('ko-KR') + '원';
+const splitList = s => String(s || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean);
+const uniq = arr => [...new Set(arr)];
+const safeUrl = u => /^https?:\/\//i.test(String(u || '').trim()) ? String(u).trim() : '';
+const badge = (t, k = '') => `<span class="badge ${k}">${esc(t)}</span>`;
+const pageHead = (t, subHtml = '', act = '') => `<div class="page-head"><div class="titles"><h1>${esc(t)}</h1>${subHtml ? `<p class="sub">${subHtml}</p>` : ''}</div>${act ? `<div class="actions">${act}</div>` : ''}</div>`;
+const meter = (n, d, cls = '') => `<div class="meter"><div class="bar ${cls}"><span style="width:${d ? Math.min(100, n / d * 100) : 0}%"></span></div><b>${pctTxt(n, d)}</b></div>`;
+const opts = (list, cur, blank) => (blank !== undefined ? `<option value="">${esc(blank)}</option>` : '') + list.map(o => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(v)}" ${String(v) === String(cur ?? '') ? 'selected' : ''}>${esc(l)}</option>`; }).join('');
+const notFound = what => `<div class="card empty"><div class="big">🔍</div><p>${esc(what)}을(를) 찾을 수 없습니다.</p><a class="btn" href="#home">홈으로</a></div>`;
+const DISCLAIMER = `<div class="notice info"><div class="grow">ⓘ <b>표본 측정</b>이며, 같은 질문에도 AI 답변은 달라질 수 있습니다. 수치는 진행 상황 참고용입니다.</div></div>`;
+
+function toast(msg, type = 'ok', ms = 2600) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type; el.textContent = msg;
+  $('#toast-root').appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 300); }, ms);
+}
+function openModal(title, body, o = {}) {
+  $('#modal-root').innerHTML = `<div class="modal-back" data-act="modalBack"><div class="modal ${o.wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="modal-head"><h2>${esc(title)}</h2><button class="btn ghost icon" data-act="closeModal" aria-label="닫기">✕</button></div><div class="modal-body">${body}</div>${o.foot ? `<div class="modal-foot">${o.foot}</div>` : ''}</div></div>`;
+  document.body.classList.add('noscroll');
+  const f = $('#modal-root [autofocus]'); if (f) setTimeout(() => f.focus(), 30);
+}
+function closeModal() { $('#modal-root').innerHTML = ''; document.body.classList.remove('noscroll'); ui.ans = null; }
+function ask(title, msg, { ok = '확인', danger = false } = {}) {
+  return new Promise(res => {
+    openModal(title, `<p style="white-space:pre-wrap">${esc(msg)}</p>`, { foot: `<button class="btn ghost" id="ask-no">취소</button><button class="btn ${danger ? 'danger' : 'primary'}" id="ask-yes">${esc(ok)}</button>` });
+    $('#ask-no').onclick = () => { closeModal(); res(false); };
+    $('#ask-yes').onclick = () => { closeModal(); res(true); };
+  });
+}
+function field(f) {
+  const id = 'f_' + f.id; const v = esc(f.value ?? '');
+  let input;
+  if (f.type === 'textarea') input = `<textarea id="${id}" rows="${f.rows || 4}" ${f.placeholder ? `placeholder="${esc(f.placeholder)}"` : ''} ${f.autofocus ? 'autofocus' : ''}>${v}</textarea>`;
+  else if (f.type === 'select') input = `<select id="${id}">${opts(f.options, f.value)}</select>`;
+  else if (f.type === 'checkbox') input = `<label class="check"><input type="checkbox" id="${id}" ${f.value ? 'checked' : ''}> ${esc(f.text || '')}</label>`;
+  else if (f.type === 'checks') input = `<div class="checks" id="${id}">${f.options.length ? f.options.map(o => { const [val, lab] = Array.isArray(o) ? o : [o, o]; return `<label class="check"><input type="checkbox" value="${esc(val)}" ${(f.value || []).includes(val) ? 'checked' : ''}> ${esc(lab)}</label>`; }).join('') : '<span class="muted">선택할 항목이 없습니다.</span>'}</div>`;
+  else input = `<input id="${id}" type="${f.type || 'text'}" value="${v}" ${f.list ? `list="dl_${id}"` : ''} ${f.placeholder ? `placeholder="${esc(f.placeholder)}"` : ''} ${f.autofocus ? 'autofocus' : ''}>${f.list ? `<datalist id="dl_${id}">${f.list.map(x => `<option value="${esc(x)}">`).join('')}</datalist>` : ''}`;
+  return `<div class="field"><label for="${id}">${esc(f.label)}${f.required ? ' <span class="req">*</span>' : ''}</label>${input}${f.hint ? `<small class="hint">${esc(f.hint)}</small>` : ''}</div>`;
+}
+function askForm(title, fields, okLabel = '저장', o = {}) {
+  return new Promise(res => {
+    openModal(title, `${o.intro || ''}<form id="ask-form">${fields.map(field).join('')}<p class="err-msg" id="ask-err"></p><button type="submit" hidden></button></form>`, { wide: o.wide, foot: `<button class="btn ghost" type="button" id="ask-no">취소</button><button class="btn primary" id="ask-yes">${esc(okLabel)}</button>` });
+    const submit = () => {
+      const out = {};
+      for (const f of fields) {
+        const el = $('#f_' + f.id);
+        let v;
+        if (f.type === 'checkbox') v = el.checked;
+        else if (f.type === 'checks') v = $$('input:checked', el).map(x => x.value);
+        else v = el.value.trim();
+        if (f.required && (!v || (Array.isArray(v) && !v.length))) { $('#ask-err').textContent = `"${f.label}"을(를) 입력하세요.`; el.focus && el.focus(); return; }
+        out[f.id] = v;
+      }
+      if (o.validate) { const msg = o.validate(out); if (msg) { $('#ask-err').textContent = msg; return; } }
+      closeModal(); res(out);
+    };
+    $('#ask-yes').onclick = submit;
+    $('#ask-form').onsubmit = e => { e.preventDefault(); submit(); };
+    $('#ask-no').onclick = () => { closeModal(); res(null); };
+  });
+}
+async function copyText(t, msg = '복사했습니다') {
+  try { await navigator.clipboard.writeText(t); toast(msg); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); let ok = false;
+    try { ok = document.execCommand('copy'); } catch (_) { }
+    ta.remove(); toast(ok ? msg : '복사하지 못했습니다. 직접 선택해 복사하세요.', ok ? 'ok' : 'err');
+  }
+}
+function download(name, text, mime = 'text/plain') {
+  const b = new Blob([text], { type: mime + ';charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+}
+const safeFile = s => String(s || 'file').replace(/[\\/:*?"<>|\s]+/g, '-').replace(/-+/g, '-').slice(0, 80);
+
+/* ---------- 아이콘 ---------- */
+const IC = {
+  home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+  pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M2 20h20"/>',
+  doc: '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+  link: '<path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>',
+  report: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 16v-4M12 16V8M16 16v-6"/>',
+  store: '<path d="M3 9l2-5h14l2 5M4 9v11h16V9M3 9h18M9 20v-6h6v6"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
+  copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
+};
+const icon = (n, s = 20) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n] || ''}</svg>`;
+
+/* ---------- 저장 계층 (IndexedDB) ---------- */
+const DB_NAME = 'geo-console', DB_VER = 1;
+const COLL = ['brands', 'stores', 'queries', 'rounds', 'answers', 'articles', 'sourceChecks'];
+const ALL_STORES = ['settings', ...COLL];
+const S = { settings: null, brands: [], stores: [], queries: [], rounds: [], answers: [], articles: [], sourceChecks: [] };
+let idb;
+function openDB() {
+  return new Promise((res, rej) => {
+    if (!('indexedDB' in window)) return rej(new Error('이 브라우저는 IndexedDB를 지원하지 않습니다.'));
+    const r = indexedDB.open(DB_NAME, DB_VER);
+    r.onupgradeneeded = () => { const d = r.result; ALL_STORES.forEach(s => { if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: 'id' }); }); };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+function tx(stores, mode, fn) {
+  return new Promise((res, rej) => {
+    let t; try { t = idb.transaction(stores, mode); } catch (e) { rej(e); return; }
+    let out; try { out = fn(t); } catch (e) { try { t.abort(); } catch (_) { } rej(e); return; }
+    t.oncomplete = () => res(out);
+    t.onerror = () => rej(t.error);
+    t.onabort = () => rej(t.error || new Error('transaction aborted'));
+  });
+}
+function getAll(s) { return new Promise((res, rej) => { const r = idb.transaction(s).objectStore(s).getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+function saveFail(e) { console.error(e); toast(`저장에 실패했습니다. 화면의 입력 내용은 그대로 두었습니다. 백업을 받아 두세요. (${(e && e.name) || '오류'})`, 'err', 7000); }
+async function put(store, obj) {
+  if (store === 'settings') S.settings = obj;
+  else { const arr = S[store]; const i = arr.findIndex(x => x.id === obj.id); if (i >= 0) arr[i] = obj; else arr.push(obj); }
+  try { await tx([store], 'readwrite', t => t.objectStore(store).put(obj)); return true; } catch (e) { saveFail(e); return false; }
+}
+async function putMany(store, objs) {
+  objs.forEach(o => { const arr = S[store]; const i = arr.findIndex(x => x.id === o.id); if (i >= 0) arr[i] = o; else arr.push(o); });
+  try { await tx([store], 'readwrite', t => { const os = t.objectStore(store); objs.forEach(o => os.put(o)); }); return true; } catch (e) { saveFail(e); return false; }
+}
+async function del(store, id) {
+  S[store] = S[store].filter(x => x.id !== id);
+  try { await tx([store], 'readwrite', t => t.objectStore(store).delete(id)); return true; } catch (e) { saveFail(e); return false; }
+}
+async function delMany(store, ids) {
+  const set = new Set(ids); S[store] = S[store].filter(x => !set.has(x.id));
+  try { await tx([store], 'readwrite', t => { const os = t.objectStore(store); ids.forEach(id => os.delete(id)); }); return true; } catch (e) { saveFail(e); return false; }
+}
+const saveSettings = () => put('settings', S.settings);
+
+/* ---------- 조회 도우미 ---------- */
+const byId = (c, id) => S[c].find(x => x.id === id);
+const storeName = id => byId('stores', id)?.name || '(삭제된 매장)';
+const brandName = id => byId('brands', id)?.name || '';
+const roundsSorted = () => [...S.rounds].sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.createdAt || '').localeCompare(b.createdAt || ''));
+const latestRound = () => roundsSorted().slice(-1)[0];
+const runningQueries = () => S.queries.filter(q => q.status === '운영 중');
+
+/* ---------- 화면 상태 ---------- */
+const ui = {
+  gen: { regions: new Set(), categories: new Set(), themes: new Set() }, genPreview: [],
+  qf: { region: '', theme: '', status: '', work: '', text: '' }, qsel: new Set(),
+  roundFilter: 'all', dashRound: '', repA: '', repB: '', artFilter: '', hl: null, preview: 'mobile', ans: null, lastChecker: '',
+};
+const cur = { store: null, article: null };
+
+/* ---------- 라우터 ---------- */
+const NAV = [['home', '홈', 'home'], ['queries', '질의', 'list'], ['rounds', '측정', 'pulse'], ['dashboard', '현황', 'chart'], ['articles', '글', 'doc'], ['sources', '출처', 'link'], ['report', '리포트', 'report'], ['stores', '매장', 'store'], ['settings', '설정', 'gear']];
+const PARENT = { round: 'rounds', article: 'articles', store: 'stores' };
+const ROUTES = { home: vHome, queries: vQueries, rounds: vRounds, round: vRound, dashboard: vDash, articles: vArticles, article: vArticle, sources: vSources, report: vReport, stores: vStores, store: vStore, settings: vSettings };
+function route() { const h = location.hash.slice(1) || 'home'; const [name, ...rest] = h.split('/'); return { name: ROUTES[name] ? name : 'home', arg: decodeURIComponent(rest.join('/')) }; }
+let lastRouteKey = '';
+const afterRender = [];
+function render() {
+  const r = route(); const key = location.hash; const y = window.scrollY;
+  let html;
+  try { html = ROUTES[r.name](r.arg); } catch (e) { console.error(e); html = `<div class="notice err">화면을 그리는 중 오류가 발생했습니다: ${esc(e.message)}</div>`; }
+  $('#main').innerHTML = html;
+  renderNav(r.name);
+  if (key === lastRouteKey) window.scrollTo(0, y); else window.scrollTo(0, 0);
+  lastRouteKey = key;
+  const fns = afterRender.splice(0); fns.forEach(f => { try { f(); } catch (e) { console.error(e); } });
+}
+const go = h => { if (location.hash === '#' + h) render(); else location.hash = h; };
+window.addEventListener('hashchange', render);
+
+function runningChip() {
+  const n = runningQueries().length;
+  return `<span class="badge ${n > 60 ? 'warn' : 'pri'}" title="운영 중 질의 수">운영 질의 ${n} / 60${n > 60 ? ' ⚠' : ''}</span>`;
+}
+function renderNav(curName) {
+  const parent = PARENT[curName] || curName;
+  const review = S.articles.filter(a => a.status === 'review').length;
+  const todo = sourceTodos().length;
+  const nb = k => k === 'articles' && review ? badge(review, 'warn') : k === 'sources' && todo ? badge(todo, '') : '';
+  $('#side').innerHTML = `<div class="brand"><div class="logo">G</div><div style="min-width:0"><div class="brand-name">GEO 운영 콘솔</div><div class="brand-sub">${esc(S.settings.ownerName || '운영 주체명 미설정')}</div></div></div>
+  <nav class="side-nav">${NAV.map(([k, l, i]) => `<a href="#${k}" class="${k === parent ? 'on' : ''}" ${k === parent ? 'aria-current="page"' : ''}>${icon(i)}<span>${l}</span>${nb(k)}</a>`).join('')}</nav>
+  <div class="side-foot">${runningChip()}<p class="small muted" style="margin:8px 0 0">브라우저에 저장됩니다. 정기적으로 백업하세요.</p></div>`;
+  const main = ['home', 'rounds', 'dashboard', 'articles'];
+  const inMore = !main.includes(parent);
+  $('#bottom').innerHTML = main.map(k => { const n = NAV.find(x => x[0] === k); return `<a href="#${k}" class="${k === parent ? 'on' : ''}">${icon(n[2], 22)}<span>${n[1]}</span></a>`; }).join('') + `<button class="${inMore ? 'on' : ''}" data-act="moreMenu" aria-label="더보기">${icon('more', 22)}<span>더보기</span></button>`;
+  $('#topbar').innerHTML = `<div class="logo sm">G</div><div class="top-title">${esc(NAV.find(x => x[0] === parent)?.[1] || '')}</div>${runningChip()}`;
+}
+
+/* ---------- 이벤트 위임 ---------- */
+const A = {}, CH = {}, IN = {};
+document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el) return; const f = A[el.dataset.act]; if (f) f(el, e); });
+document.addEventListener('change', e => { const el = e.target.closest('[data-ch]'); if (el && CH[el.dataset.ch]) CH[el.dataset.ch](el, e); });
+document.addEventListener('input', e => { const el = e.target.closest('[data-in]'); if (el && IN[el.dataset.in]) IN[el.dataset.in](el, e); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('#modal-root').innerHTML) { closeModal(); return; }
+  const t = e.target;
+  if (e.key === 'Enter' && t.dataset && t.dataset.tagInput) { e.preventDefault(); tagAdd(t.dataset.tagInput); }
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && ui.ans) { e.preventDefault(); saveAnswer(true); }
+});
+A.closeModal = () => closeModal();
+A.modalBack = (el, e) => { if (e.target === el) closeModal(); };
+A.copy = el => copyText(el.dataset.text);
+A.go = el => go(el.dataset.to);
+A.moreMenu = () => {
+  const items = NAV.filter(n => !['home', 'rounds', 'dashboard', 'articles'].includes(n[0]));
+  openModal('더보기', `<div class="more-grid">${items.map(([k, l, i]) => `<a href="#${k}" data-act="closeModal">${icon(i, 22)}${l}</a>`).join('')}</div>`);
+};
+
+/* ---------- 태그 편집기 (별칭·목록) ---------- */
+const TAGS = {};
+function tagEditor(key, list, placeholder = '입력 후 Enter') {
+  return `<div class="tags">${list.length ? list.map((t, i) => `<span class="tag">${esc(t)}<button data-act="tagDel" data-key="${key}" data-i="${i}" aria-label="${esc(t)} 삭제">✕</button></span>`).join('') : '<span class="muted small">아직 없습니다.</span>'}</div>
+  <div class="frow"><div class="field" style="margin-bottom:0"><input type="text" id="tag-${key}" data-tag-input="${key}" placeholder="${esc(placeholder)}" aria-label="${esc(placeholder)}"></div><button class="btn soft" data-act="tagAdd" data-key="${key}" style="margin-bottom:0">추가</button></div>`;
+}
+function tagAdd(key) {
+  const inp = $('#tag-' + key); if (!inp) return;
+  const vals = splitList(inp.value); if (!vals.length) return;
+  const t = TAGS[key]; const list = t.get();
+  const add = vals.filter(v => !list.some(x => compact(x) === compact(v)));
+  if (!add.length) { toast('이미 있는 항목입니다', 'warn'); return; }
+  t.set([...list, ...add]); render();
+  setTimeout(() => { const n = $('#tag-' + key); if (n) n.focus(); }, 0);
+}
+A.tagAdd = el => tagAdd(el.dataset.key);
+A.tagDel = el => { const t = TAGS[el.dataset.key]; const list = [...t.get()]; list.splice(+el.dataset.i, 1); t.set(list); render(); };
+
+/* =========================================================
+   기본값·초기 데이터
+   ========================================================= */
+const DATA_VERSION = 1;
+const INFO_FIELDS = [['address', '주소'], ['phone', '전화'], ['mapUrl', '지도 링크'], ['reservationUrl', '예약 링크'], ['hours', '영업시간'], ['closed', '휴무'], ['parking', '주차'], ['groupSeats', '단체석']];
+const INFO_STATUS = ['미입력', '확인 필요', '확인됨', '없음'];
+const INFO_KIND = { '미입력': '', '확인 필요': 'warn', '확인됨': 'ok', '없음': 'info' };
+const Q_STATUS = ['후보', '운영 중', '보류'];
+const Q_KIND = { '후보': '', '운영 중': 'pri', '보류': 'warn' };
+const WORK = ['공략', '유지'];
+function DEFAULT_DICT() {
+  return [
+    { name: '다이닝코드', domains: ['diningcode.com'], aliases: ['다이닝코드', 'diningcode'] },
+    { name: '트립어드바이저', domains: ['tripadvisor.com', 'tripadvisor.co.kr'], aliases: ['트립어드바이저', 'tripadvisor'] },
+    { name: '구글', domains: ['google.com', 'google.co.kr', 'goo.gl', 'g.page'], aliases: ['구글 지도', '구글맵', '구글 맵스', 'google maps', '구글 리뷰', '구글 플레이스', '구글 비즈니스'] },
+    { name: '네이버', domains: ['naver.com', 'naver.me'], aliases: ['네이버 플레이스', '네이버 지도', '네이버 블로그', '네이버 리뷰', '네이버 예약'] },
+    { name: '카카오맵', domains: ['kakao.com', 'kko.to'], aliases: ['카카오맵', '카카오 맵', '카카오 지도'] },
+    { name: '망고플레이트', domains: ['mangoplate.com'], aliases: ['망고플레이트', 'mangoplate'] },
+    { name: '뉴스 기사', domains: ['news.naver.com', 'n.news.naver.com', 'v.daum.net', 'chosun.com', 'joongang.co.kr', 'donga.com', 'hani.co.kr', 'khan.co.kr', 'mk.co.kr', 'hankyung.com', 'yna.co.kr', 'news1.kr', 'newsis.com', 'sedaily.com', 'mt.co.kr', 'edaily.co.kr', 'seoul.co.kr', 'kmib.co.kr', 'asiae.co.kr', 'heraldcorp.com', 'fnnews.com', 'sbs.co.kr', 'kbs.co.kr', 'imbc.com', 'jtbc.co.kr', 'ytn.co.kr'], aliases: ['뉴스 기사', '언론 보도', '기사에 따르면', '보도에 따르면'] },
+    { name: '공식 홈페이지', domains: [], aliases: ['공식 홈페이지', '공식홈페이지', '공식 사이트', '공식 웹사이트'] },
+    { name: '인스타그램', domains: ['instagram.com'], aliases: ['인스타그램', 'instagram'] },
+    { name: '유튜브', domains: ['youtube.com', 'youtu.be'], aliases: ['유튜브', 'youtube'] },
+    { name: '티스토리', domains: ['tistory.com'], aliases: ['티스토리', 'tistory'] },
+    { name: '구글 블로그', domains: ['blogspot.com', 'blogspot.kr', 'blogger.com'], aliases: ['블로그스팟', 'blogspot'] },
+  ].map(d => ({ id: uid('src_'), ...d }));
+}
+function DEFAULT_CHECK() {
+  return [['공식 홈페이지', '공식 홈페이지'], ['네이버 플레이스', '네이버'], ['카카오맵', '카카오맵'], ['구글 비즈니스 프로필', '구글'], ['다이닝코드', '다이닝코드'], ['트립어드바이저', '트립어드바이저'], ['naejari.kr', ''], ['뉴스 기사', '뉴스 기사']]
+    .map(([name, dictName]) => ({ id: uid('cs_'), name, dictName }));
+}
+function defaultSettings() {
+  return {
+    id: 'main', dataVersion: DATA_VERSION, ownerName: '', ownerIntro: '', siteUrl: '',
+    ais: ['GPT', 'Gemini', 'Claude'],
+    regions: ['문래', '신도림', '마포'], categories: ['고깃집', '곱창', '양꼬치'],
+    themes: ['맛집', '회식', '데이트', '가성비', '단체', '혼밥', '술집', '주차'],
+    claimWords: ['최고', '1위', '유일', '원조', '수상', '방송', '특허', '국내산', '한우', '숙성'],
+    sourceDict: DEFAULT_DICT(), checkSources: DEFAULT_CHECK(), blogDictAdded: true,
+    queryTemplate: '{지역} {테마} {업종} 추천', lastBackup: null, createdAt: nowISO(),
+  };
+}
+function migrateSettings() {
+  const d = defaultSettings();
+  const needBlog = !S.settings.blogDictAdded;
+  for (const k of Object.keys(d)) if (S.settings[k] === undefined) S.settings[k] = d[k];
+  // v0.2.1: 블로그 채널 출처를 기존 사전에 한 번만 추가 (사용자가 지운 뒤에는 다시 넣지 않음)
+  if (needBlog) {
+    for (const n of ['티스토리', '구글 블로그']) {
+      const def = d.sourceDict.find(x => x.name === n);
+      if (!S.settings.sourceDict.some(x => x.name === n || x.domains.includes(def.domains[0]))) S.settings.sourceDict.push(def);
+    }
+    S.settings.blogDictAdded = true; saveSettings();
+  }
+}
+function blankInfo(status) { const o = {}; INFO_FIELDS.forEach(([k]) => o[k] = { value: '', status, checker: '', checkedAt: '', note: '' }); return o; }
+function newStore(p) {
+  return {
+    id: uid('st_'), brandId: p.brandId || '', name: p.name, region: p.region || '', category: p.category || '',
+    aliases: p.aliases || [p.name], info: blankInfo(p.status || '미입력'),
+    menu: { items: [], status: p.status || '미입력', checker: '', checkedAt: '', note: '' },
+    pageUrl: '', memo: p.memo || '', createdAt: nowISO(),
+  };
+}
+/* 국내 직영 매장 목록 — 출처: 「직영 매장별 마케팅 전략」 엑셀(매장별 시트의 위치·교통 정보).
+   내부 기획 문서라 값은 모두 "확인 필요"로 넣는다. 확인됨 처리는 사람이 확인자·확인일과 함께 한다.
+   match: 이 이름의 기존 매장(이전 예시 매장 등)이 있으면 새로 만들지 않고 그 매장을 채운다. */
+const DIRECT_SRC = '출처: 직영 매장별 마케팅 전략.xlsx (내부 기획 문서)';
+const DIRECT_BRANDS = ['월화고기', '월화식당', '곱', '원조마늘곱창', '월화갈비', '느루집', '계옥정'];
+const DIRECT_STORES = [
+  { brand: '월화고기', name: '월화고기 보라매', region: '보라매', category: '고깃집', aliases: ['월화고기 보라매점', '월화고기 보라매'], address: '서울 관악구 보라매로3길 16', parking: '주차 지원', groupSeats: '2층 98석, 3층 140석 단체석' },
+  { brand: '월화고기', name: '월화고기 문래', region: '문래', category: '고깃집', aliases: ['월화고기 문래점', '월화고기 문래'], address: '서울 영등포구 당산로 34', parking: '로데오 상가 주차장 이용(주차 지원)', groupSeats: '최대 100석 대관·단체 예약' },
+  { brand: '월화고기', name: '월화고기 상암', region: '상암', category: '고깃집', aliases: ['월화고기 상암점', '월화고기 상암'], address: '서울 마포구 매봉산로2안길 12-6 (상암동 1603)' },
+  { brand: '월화식당', name: '월화식당 마포', region: '마포', category: '고깃집', aliases: ['월화식당 마포본점', '월화식당 마포점', '월화식당 마포', '월화식당'], address: '서울 마포구 도화길 29 (도화동 179-4)', match: ['월화식당'] },
+  { brand: '곱', name: '곱 마포직영점', region: '마포', category: '곱창', aliases: ['곱 마포직영점', '곱 마포점', '마포 곱'], address: '서울 마포구 도화길 31-1 (도화동 179-11)' },
+  { brand: '곱', name: '곱 문래본점', region: '문래', category: '곱창', aliases: ['곱 문래본점', '곱 문래점', '문래 곱'], address: '서울 영등포구 당산로 34 1층 118호 (문래동3가 55-5)', parking: '월화고기 문래점과 같은 로데오 상가 주차장' },
+  { brand: '곱', name: '곱 강남점', region: '강남', category: '곱창', aliases: ['곱 강남점', '강남 곱'], address: '서울 강남구 역삼로3길 12 (역삼동 830-31)' },
+  { brand: '곱', name: '상암곱', region: '상암', category: '곱창', aliases: ['상암곱', '상암 곱', '곱 상암점'], address: '서울 마포구 매봉산로2안길 12-6', groupSeats: '최대 70석 단체석', memo: '엑셀 주소가 월화고기 상암과 같습니다. 같은 건물인지 확인 필요' },
+  { brand: '원조마늘곱창', name: '원조마늘곱창 문래본점', region: '문래', category: '곱창', aliases: ['원조마늘곱창 문래본점', '원조마늘곱창 문래', '원조마늘곱창'], address: '서울 영등포구 경인로79길 17-1 1층', parking: '매장 주차 불가, 인근 공영주차장 이용' },
+  { brand: '월화갈비', name: '월화갈비 문래', region: '문래', category: '갈비', aliases: ['월화갈비 문래점', '월화갈비 문래', '월화갈비'], address: '서울 영등포구 경인로79길 17 1층', parking: '매장 주차 어려움', match: ['월화갈비'] },
+  { brand: '느루집', name: '느루집 문래', region: '문래', category: '', aliases: ['느루집 문래점', '느루집 문래', '느루집'], memo: '엑셀의 느루집 시트가 월화갈비 문래 내용을 복사한 상태라 주소·업종을 넣지 않았습니다. 확인 후 입력하세요' },
+];
+async function applyDirectStores(silent) {
+  const brandId = {};
+  const newBrands = [];
+  for (const n of DIRECT_BRANDS) { let b = S.brands.find(x => compact(x.name) === compact(n)); if (!b) { b = { id: uid('br_'), name: n }; newBrands.push(b); } brandId[n] = b.id; }
+  if (newBrands.length) await putMany('brands', newBrands);
+  const changed = []; let added = 0, updated = 0;
+  for (const p of DIRECT_STORES) {
+    const keys = [p.name, ...(p.match || [])].map(compact);
+    let st = S.stores.find(s => keys.includes(compact(s.name)));
+    if (!st) { st = newStore({ name: p.name, status: '미입력' }); added++; } else updated++;
+    Object.assign(st, { name: p.name, brandId: brandId[p.brand] || st.brandId, region: p.region || st.region, category: p.category || st.category });
+    const shared = DIRECT_BRANDS.filter(n => DIRECT_STORES.filter(x => x.brand === n).length > 1).map(compact);
+    const merged = [...st.aliases.filter(a => !shared.includes(compact(a))), p.name, ...p.aliases];
+    st.aliases = merged.filter((a, i) => merged.findIndex(x => compact(x) === compact(a)) === i);
+    for (const k of ['address', 'parking', 'groupSeats']) {
+      const f = st.info[k];
+      if (p[k] && f.status !== '확인됨') Object.assign(f, { value: p[k], status: '확인 필요', note: DIRECT_SRC });
+    }
+    st.memo = p.memo || (st.seed ? '' : st.memo);
+    delete st.seed;
+    changed.push(st);
+  }
+  await putMany('stores', changed);
+  ['보라매', '문래', '상암', '마포', '강남'].forEach(r => addToList('regions', r));
+  ['고깃집', '곱창', '갈비'].forEach(c => addToList('categories', c));
+  S.settings.directStoresApplied = DIRECT_STORES.length; await saveSettings();
+  if (!silent || added || updated) toast(`직영 매장 목록 적용: 새로 추가 ${added}곳 · 갱신 ${updated}곳`, 'ok', 4000);
+}
+function addToList(key, v) { if (v && !S.settings[key].includes(v)) { S.settings[key].push(v); saveSettings(); } }
+
+/* =========================================================
+   F-01 매장·공식 정보
+   ========================================================= */
+function confirmCount(st) { let n = 0; INFO_FIELDS.forEach(([k]) => { if (st.info[k]?.status === '확인됨') n++; }); if (st.menu?.status === '확인됨') n++; return [n, INFO_FIELDS.length + 1]; }
+function vStores() {
+  const seedNote = S.settings.directStoresApplied ? `<div class="notice info"><div class="grow"><b>국내 직영 매장 목록</b>은 「직영 매장별 마케팅 전략」 엑셀에서 가져왔습니다. 주소·주차·단체석은 내부 기획 문서 기준이라 모두 <b>"확인 필요"</b>입니다. 실제로 확인한 뒤 확인자·확인일과 함께 "확인됨"으로 바꿔 주세요. 전화·영업시간·메뉴는 엑셀에 없어 비어 있습니다.</div></div>` : "";
+  const brands = S.brands.map(b => `<span class="tag">${esc(b.name)} <small class="muted">&nbsp;${S.stores.filter(s => s.brandId === b.id).length}곳</small><button data-act="brandEdit" data-id="${b.id}" aria-label="${esc(b.name)} 이름 수정">✎</button><button data-act="brandDel" data-id="${b.id}" aria-label="${esc(b.name)} 삭제">✕</button></span>`).join('');
+  const list = [...S.stores].sort((a, b) => brandName(a.brandId).localeCompare(brandName(b.brandId), 'ko') || a.name.localeCompare(b.name, 'ko'));
+  const rows = list.map(st => {
+    const [n, t] = confirmCount(st);
+    return `<tr><td class="mc" data-label="매장"><a href="#store/${st.id}" class="qtext">${esc(st.name)}</a>${st.seed ? ' ' + badge('예시', 'warn') : ''}</td>
+      <td data-label="브랜드">${esc(brandName(st.brandId)) || '<span class="muted">미지정</span>'}</td>
+      <td data-label="지역">${esc(st.region) || '<span class="muted">미정</span>'}</td>
+      <td data-label="업종">${esc(st.category) || '<span class="muted">미정</span>'}</td>
+      <td data-label="별칭">${st.aliases.length}개</td>
+      <td data-label="정보 확인" style="min-width:160px">${meter(n, t, n === t ? 'ok' : '')}</td>
+      <td data-label="관리"><a class="btn" href="#store/${st.id}">편집</a></td></tr>`;
+  }).join('');
+  return `${pageHead('매장·공식 정보', '별칭은 AI 답변 자동 판정에, "확인됨" 정보는 글 작성과 내보내기에 쓰입니다.', `<button class="btn" data-act="directApply">직영 목록 다시 적용</button><button class="btn primary" data-act="storeAdd">+ 매장 추가</button>`)}
+  ${seedNote}
+  <div class="card"><div class="card-head"><h2>브랜드</h2><button class="btn soft" data-act="brandAdd">+ 브랜드</button></div><div class="tags">${brands || '<span class="muted">브랜드가 없습니다.</span>'}</div></div>
+  <div class="card"><div class="card-head"><h2>매장 ${S.stores.length}곳</h2></div>
+  ${S.stores.length ? `<div class="table-wrap"><table class="t stack"><thead><tr><th>매장</th><th>브랜드</th><th>지역</th><th>업종</th><th>별칭</th><th>정보 확인</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty"><div class="big">🏪</div>매장을 추가하세요.</div>`}</div>`;
+}
+A.directApply = async () => { if (!await ask('직영 목록 다시 적용', '엑셀 기준 국내 직영 매장 목록을 다시 적용할까요?\n없는 매장은 추가하고, 있는 매장은 브랜드·지역·업종·별칭을 맞춥니다. "확인됨" 정보는 바꾸지 않습니다.', { ok: '적용' })) return; await applyDirectStores(false); render(); };
+A.brandAdd = async () => { const r = await askForm('브랜드 추가', [{ id: 'name', label: '브랜드 이름', required: true, autofocus: true }]); if (!r) return; await put('brands', { id: uid('br_'), name: r.name }); render(); };
+A.brandEdit = async el => { const b = byId('brands', el.dataset.id); const r = await askForm('브랜드 이름 수정', [{ id: 'name', label: '브랜드 이름', required: true, value: b.name, autofocus: true }]); if (!r) return; b.name = r.name; await put('brands', b); render(); };
+A.brandDel = async el => {
+  const b = byId('brands', el.dataset.id); const used = S.stores.filter(s => s.brandId === b.id);
+  if (!await ask('브랜드 삭제', `"${b.name}" 브랜드를 삭제할까요?${used.length ? `\n이 브랜드의 매장 ${used.length}곳은 "브랜드 미지정"이 됩니다.` : ''}`, { ok: '삭제', danger: true })) return;
+  used.forEach(s => s.brandId = ''); if (used.length) await putMany('stores', used);
+  await del('brands', b.id); render();
+};
+A.storeAdd = async () => {
+  const r = await askForm('매장 추가', [
+    { id: 'name', label: '매장명', required: true, autofocus: true, placeholder: '예: 월화고기 신도림' },
+    { id: 'brandId', label: '브랜드', type: 'select', options: [['', '미지정'], ...S.brands.map(b => [b.id, b.name])] },
+    { id: 'region', label: '지역', list: S.settings.regions, placeholder: '예: 신도림' },
+    { id: 'category', label: '업종', list: S.settings.categories, placeholder: '예: 고깃집' },
+    { id: 'aliases', label: '별칭 (쉼표로 구분)', placeholder: '예: 월화고기 신도림점, 월화고기 신도림', hint: '매장명은 자동으로 별칭에 포함됩니다.' },
+  ], '추가');
+  if (!r) return;
+  const st = newStore({ ...r, aliases: uniq([r.name, ...splitList(r.aliases)]) });
+  addToList('regions', r.region); addToList('categories', r.category);
+  await put('stores', st); go('store/' + st.id);
+};
+function vStore(id) {
+  const st = byId('stores', id); if (!st) return notFound('매장');
+  cur.store = id;
+  TAGS.alias = { get: () => st.aliases, set: v => { st.aliases = v; put('stores', st); } };
+  const statusSel = (k, f) => `<select data-ch="infoStatus" data-k="${k}" aria-label="상태">${opts(INFO_STATUS, f.status)}</select>`;
+  const who = f => f.status === '확인됨' ? `<span class="small">${esc(f.checker)}<br><span class="muted">${esc(f.checkedAt)}</span></span>` : '<span class="muted small">—</span>';
+  const infoRows = INFO_FIELDS.map(([k, l]) => {
+    const f = st.info[k];
+    return `<tr><td class="mc" data-label="항목"><b>${l}</b> ${badge(f.status, INFO_KIND[f.status])}</td>
+    <td data-label="값" style="min-width:220px"><input type="text" value="${esc(f.value)}" data-ch="infoVal" data-k="${k}" aria-label="${l} 값" placeholder="${l}"></td>
+    <td data-label="상태">${statusSel(k, f)}</td><td data-label="확인자·확인일">${who(f)}</td>
+    <td data-label="근거 메모" style="min-width:160px"><input type="text" value="${esc(f.note)}" data-ch="infoNote" data-k="${k}" aria-label="${l} 근거 메모" placeholder="근거 메모"></td></tr>`;
+  }).join('');
+  const m = st.menu;
+  const menuRows = m.items.map((it, i) => `<tr><td class="mc" data-label="메뉴"><input type="text" value="${esc(it.name)}" data-ch="menuItem" data-i="${i}" data-k="name" placeholder="메뉴명" aria-label="메뉴명"></td>
+    <td data-label="가격(원)"><input type="number" inputmode="numeric" min="0" step="100" value="${esc(it.price ?? '')}" data-ch="menuItem" data-i="${i}" data-k="price" placeholder="예: 15000" aria-label="가격" style="max-width:180px"></td>
+    <td data-label="삭제"><button class="btn ghost icon" data-act="menuDel" data-i="${i}" aria-label="메뉴 삭제">✕</button></td></tr>`).join('');
+  return `${pageHead(st.name, `${esc(brandName(st.brandId) || '브랜드 미지정')} · ${esc(st.region || '지역 미정')} · ${esc(st.category || '업종 미정')}`, `<a class="btn" href="#stores">← 매장 목록</a><button class="btn danger" data-act="storeDel">매장 삭제</button>`)}
+  ${st.memo ? `<div class="notice warn"><div class="grow">${esc(st.memo)}</div></div>` : ''}
+  <div class="grid2">
+    <div class="card"><h2>기본 정보</h2>
+      ${field({ id: 'st_name', label: '매장명', value: st.name }).replace('<input', '<input data-ch="storeField" data-k="name"')}
+      <div class="field"><label for="st_brand">브랜드</label><select id="st_brand" data-ch="storeField" data-k="brandId">${opts([['', '미지정'], ...S.brands.map(b => [b.id, b.name])], st.brandId)}</select></div>
+      <div class="frow">
+        ${field({ id: 'st_region', label: '지역', value: st.region, list: S.settings.regions }).replace('<input', '<input data-ch="storeField" data-k="region"')}
+        ${field({ id: 'st_cat', label: '업종', value: st.category, list: S.settings.categories }).replace('<input', '<input data-ch="storeField" data-k="category"')}
+      </div>
+      ${field({ id: 'st_page', label: '공식 정보 페이지 주소 (llms.txt에 쓰임)', value: st.pageUrl, type: 'url', placeholder: 'https://...' }).replace('<input', '<input data-ch="storeField" data-k="pageUrl"')}
+      ${field({ id: 'st_memo', label: '내부 메모', value: st.memo }).replace('<input', '<input data-ch="storeField" data-k="memo"')}
+    </div>
+    <div class="card"><h2>별칭 <span class="badge pri">${st.aliases.length}</span></h2>
+      <p class="hint" style="margin-top:-6px">AI 답변에서 이 매장을 찾을 때 쓰는 이름입니다. 띄어쓰기는 무시하고 찾습니다. 같은 브랜드 지점이 늘어나면 브랜드명만 있는 별칭(예: "월화고기")은 지점명으로 바꾸세요.</p>
+      ${tagEditor('alias', st.aliases, '예: 월화고기 문래점')}
+    </div>
+  </div>
+  <div class="card"><div class="card-head"><h2>항목별 공식 정보</h2><span class="hint">"확인됨"으로 바꾸려면 확인자·확인일이 필요합니다. 확인된 값을 고치면 "확인 필요"로 돌아갑니다.</span></div>
+    <div class="table-wrap"><table class="t stack"><thead><tr><th>항목</th><th>값</th><th>상태</th><th>확인자·확인일</th><th>근거 메모</th></tr></thead><tbody>${infoRows}</tbody></table></div>
+  </div>
+  <div class="card"><div class="card-head"><h2>메뉴와 가격</h2>${badge(m.status, INFO_KIND[m.status])}<div class="actions">${statusSel('menu', m)}</div></div>
+    <p class="hint" style="margin-top:-4px">${m.status === '확인됨' ? `확인: ${esc(m.checker)} · ${esc(m.checkedAt)}${m.note ? ' · ' + esc(m.note) : ''}` : '메뉴가 "확인됨"일 때만 글 프롬프트·가격 검사·내보내기에 쓰입니다.'}</p>
+    ${m.items.length ? `<div class="table-wrap"><table class="t stack"><thead><tr><th>메뉴</th><th>가격(원)</th><th></th></tr></thead><tbody>${menuRows}</tbody></table></div>` : '<p class="muted">메뉴가 없습니다.</p>'}
+    <button class="btn soft" data-act="menuAdd">+ 메뉴 추가</button>
+  </div>`;
+}
+const curStore = () => byId('stores', cur.store);
+function revertIfConfirmed(f, label) { if (f.status === '확인됨') { f.status = '확인 필요'; toast(`${label}: 확인된 값이 바뀌어 "확인 필요"로 돌아갔습니다`, 'warn', 3500); } }
+CH.storeField = async el => {
+  const st = curStore(); const k = el.dataset.k; const v = el.value.trim();
+  if (k === 'name' && !v) { toast('매장명은 비울 수 없습니다', 'warn'); render(); return; }
+  st[k] = v;
+  if (k === 'name' && !st.aliases.some(a => compact(a) === compact(v))) st.aliases.push(v);
+  if (k === 'region') addToList('regions', v);
+  if (k === 'category') addToList('categories', v);
+  await put('stores', st); render();
+};
+CH.infoVal = async el => {
+  const st = curStore(); const k = el.dataset.k; const f = st.info[k]; const v = el.value.trim();
+  if (v === f.value) return;
+  f.value = v; revertIfConfirmed(f, INFO_FIELDS.find(x => x[0] === k)[1]);
+  if (f.status === '미입력' && v) f.status = '확인 필요';
+  await put('stores', st); render();
+};
+CH.infoNote = async el => { const st = curStore(); st.info[el.dataset.k].note = el.value.trim(); await put('stores', st); };
+CH.infoStatus = async el => {
+  const st = curStore(); const k = el.dataset.k; const f = k === 'menu' ? st.menu : st.info[k]; const v = el.value;
+  if (v === '확인됨') {
+    if (k === 'menu' ? !st.menu.items.some(i => i.name) : !f.value) { toast(k === 'menu' ? '메뉴를 먼저 입력하세요' : '값을 먼저 입력하세요. 해당 정보가 없으면 "없음"을 고르세요.', 'warn', 3500); render(); return; }
+    const r = await askForm('"확인됨"으로 표시', [
+      { id: 'checker', label: '확인자 이름', required: true, value: ui.lastChecker, autofocus: true },
+      { id: 'checkedAt', label: '확인일', type: 'date', required: true, value: today() },
+      { id: 'note', label: '근거 메모 (선택)', value: f.note || '', placeholder: '예: 사장님 전화 확인, 메뉴판 사진' },
+    ], '확인됨으로 저장');
+    if (!r) { render(); return; }
+    Object.assign(f, { status: '확인됨', checker: r.checker, checkedAt: r.checkedAt, note: r.note }); ui.lastChecker = r.checker;
+  } else f.status = v;
+  await put('stores', st); render();
+};
+CH.menuItem = async el => {
+  const st = curStore(); const it = st.menu.items[+el.dataset.i]; const k = el.dataset.k;
+  const v = k === 'price' ? (el.value === '' ? null : Math.round(Number(el.value))) : el.value.trim();
+  if (it[k] === v) return; it[k] = v; revertIfConfirmed(st.menu, '메뉴');
+  if (st.menu.status === '미입력') st.menu.status = '확인 필요';
+  await put('stores', st); render();
+};
+A.menuAdd = async () => { const st = curStore(); st.menu.items.push({ name: '', price: null }); revertIfConfirmed(st.menu, '메뉴'); await put('stores', st); render(); setTimeout(() => { const l = $$('[data-ch="menuItem"][data-k="name"]'); l[l.length - 1]?.focus(); }, 0); };
+A.menuDel = async el => { const st = curStore(); st.menu.items.splice(+el.dataset.i, 1); revertIfConfirmed(st.menu, '메뉴'); await put('stores', st); render(); };
+A.storeDel = async () => {
+  const st = curStore();
+  if (!await ask('매장 삭제', `"${st.name}" 매장을 삭제할까요?\n지난 측정 결과에는 "(삭제된 매장)"으로 표시됩니다.`, { ok: '삭제', danger: true })) return;
+  await del('stores', st.id);
+  const sc = S.sourceChecks.filter(c => c.storeId === st.id).map(c => c.id); if (sc.length) await delMany('sourceChecks', sc);
+  go('stores');
+};
+
+/* =========================================================
+   F-02 질의 세트 설계
+   ========================================================= */
+const qKey = t => compact(t);
+function genCombos() {
+  const g = ui.gen, s = S.settings;
+  const R = s.regions.filter(x => g.regions.has(x)), C = s.categories.filter(x => g.categories.has(x)), T = s.themes.filter(x => g.themes.has(x));
+  if (!R.length || !C.length || !T.length) return null;
+  const tpl = s.queryTemplate || '{지역} {테마} {업종} 추천';
+  const out = [], seen = new Set();
+  for (const r of R) for (const c of C) for (const t of T) {
+    const text = tpl.replace(/\{지역\}/g, r).replace(/\{업종\}/g, c).replace(/\{테마\}/g, t).replace(/\s+/g, ' ').trim();
+    const k = qKey(text); if (seen.has(k)) continue; seen.add(k);
+    const dup = S.queries.some(q => qKey(q.text) === k);
+    out.push({ text, region: r, category: c, theme: t, dup, sel: !dup });
+  }
+  return out;
+}
+function filteredQueries() {
+  const f = ui.qf;
+  return S.queries.filter(q => (!f.region || q.region === f.region) && (!f.theme || q.theme === f.theme) && (!f.status || q.status === f.status) && (!f.work || (f.work === '미지정' ? !q.workType : q.workType === f.work)) && (!f.text || compact(q.text).includes(compact(f.text))))
+    .sort((a, b) => Q_STATUS.indexOf(a.status) === Q_STATUS.indexOf(b.status) ? (a.createdAt || '').localeCompare(b.createdAt || '') : (a.status === '운영 중' ? -1 : b.status === '운영 중' ? 1 : Q_STATUS.indexOf(a.status) - Q_STATUS.indexOf(b.status)));
+}
+const targetsHtml = q => (q.targets || []).length ? q.targets.map(id => `<span class="pill">${esc(storeName(id))}</span>`).join('') : '<span class="muted small">지정 안 함</span>';
+function vQueries() {
+  const s = S.settings, g = ui.gen, f = ui.qf;
+  const running = runningQueries().length;
+  const chipRow = (key, list) => `<div class="chips">${list.map(v => `<button class="chip ${g[key].has(v) ? 'on' : ''}" data-act="genToggle" data-g="${key}" data-v="${esc(v)}" aria-pressed="${g[key].has(v)}">${esc(v)}</button>`).join('') || '<span class="muted">설정에서 목록을 추가하세요.</span>'}</div>`;
+  const prev = ui.genPreview;
+  const prevHtml = prev.length ? `<hr><div class="card-head"><h3 style="margin:0;flex:1">미리보기 ${prev.length}개 · 선택 ${prev.filter(p => p.sel).length}개</h3><button class="btn ghost" data-act="genClear">닫기</button><button class="btn primary" data-act="genAdd">선택한 질의를 후보로 추가</button></div>
+    <div style="max-height:360px;overflow:auto"><ul class="list">${prev.map((p, i) => `<li><label class="check grow"><input type="checkbox" data-ch="genSel" data-i="${i}" ${p.sel ? 'checked' : ''} ${p.dup ? 'disabled' : ''}> <input type="text" value="${esc(p.text)}" data-ch="genText" data-i="${i}" aria-label="질의 문장 수정" ${p.dup ? 'disabled' : ''}></label>${p.dup ? badge('이미 있음', '') : ''}</li>`).join('')}</ul></div>` : '';
+  const list = filteredQueries();
+  const sel = ui.qsel; [...sel].forEach(id => { if (!byId('queries', id)) sel.delete(id); });
+  const rows = list.map(q => `<tr>
+    <td data-label="선택" style="width:44px"><input type="checkbox" data-ch="qSel" data-id="${q.id}" ${sel.has(q.id) ? 'checked' : ''} aria-label="선택"></td>
+    <td class="mc" data-label="질의"><div class="copy-row"><button class="btn ghost icon" data-act="copy" data-text="${esc(q.text)}" title="질의 복사" aria-label="질의 복사">${icon('copy', 18)}</button><div class="qtext">${esc(q.text)}<div class="qmeta">${[q.region, q.category, q.theme].filter(Boolean).map(esc).join(' · ') || '분류 없음'}</div></div></div></td>
+    <td data-label="상태"><select data-ch="qStatus" data-id="${q.id}" aria-label="상태">${opts(Q_STATUS, q.status)}</select></td>
+    <td data-label="작업 구분"><select data-ch="qWork" data-id="${q.id}" aria-label="작업 구분">${opts(WORK, q.workType, '미지정')}</select></td>
+    <td data-label="목표 매장"><button class="btn ghost" data-act="qTargets" data-id="${q.id}" style="flex-wrap:wrap;white-space:normal;height:auto;justify-content:flex-start;text-align:left">${targetsHtml(q)}</button></td>
+    <td data-label="관리" class="nowrap"><button class="btn ghost" data-act="qEdit" data-id="${q.id}">수정</button><button class="btn ghost" data-act="qDel" data-id="${q.id}" aria-label="삭제">✕</button></td></tr>`).join('');
+  const fSel = (k, list, blank) => `<div class="field" style="flex:1 1 140px"><label for="qf_${k}">${blank}</label><select id="qf_${k}" data-ch="qFilter" data-k="${k}">${opts(list, f[k], '전체')}</select></div>`;
+  return `${pageHead('질의 세트', '지역 × 업종 × 테마로 후보를 만들고, 측정할 질의를 "운영 중"으로 둡니다. 처음에는 60개로 시작합니다.', `<button class="btn primary" data-act="qAdd">+ 질의 직접 추가</button>`)}
+  <div class="notice ${running > 60 ? 'warn' : 'info'}"><div class="grow"><b>운영 중 질의 ${running}개</b> / 기준 60개${running > 60 ? ' — 60개를 넘었습니다. 측정량(질의 × AI)이 늘어나니 확인하세요. (막지는 않습니다)' : ''} · 후보 ${S.queries.filter(q => q.status === '후보').length} · 보류 ${S.queries.filter(q => q.status === '보류').length}</div></div>
+  <div class="card"><div class="card-head"><h2>조합 생성기</h2><span class="hint">각 줄에서 1개 이상 고르세요.</span></div>
+    <div class="field"><label>지역</label>${chipRow('regions', s.regions)}</div>
+    <div class="field"><label>업종</label>${chipRow('categories', s.categories)}</div>
+    <div class="field"><label>테마</label>${chipRow('themes', s.themes)}</div>
+    <div class="frow"><div class="field"><label for="q_tpl">문장 틀 <span class="hint">{지역} {업종} {테마}를 씁니다</span></label><input type="text" id="q_tpl" value="${esc(s.queryTemplate)}" data-ch="qTpl"></div><button class="btn primary" data-act="genRun">조합 생성</button></div>
+    ${prevHtml}
+  </div>
+  <div class="card"><div class="card-head"><h2>질의 목록 <span class="badge">${list.length} / ${S.queries.length}</span></h2></div>
+    <div class="frow">${fSel('region', s.regions, '지역')}${fSel('theme', s.themes, '테마')}${fSel('status', Q_STATUS, '상태')}${fSel('work', [...WORK, '미지정'], '작업 구분')}
+      <div class="field" style="flex:2 1 200px"><label for="qf_text">문장 검색</label><input type="search" id="qf_text" value="${esc(f.text)}" data-ch="qFilter" data-k="text" placeholder="입력 후 Enter"></div></div>
+    ${sel.size ? `<div class="notice info sticky-bar"><div class="grow"><b>${sel.size}개 선택</b></div><div class="actions">${Q_STATUS.map(st => `<button class="btn" data-act="qBulk" data-k="status" data-v="${st}">${st}</button>`).join('')}${WORK.map(w => `<button class="btn" data-act="qBulk" data-k="workType" data-v="${w}">${w}</button>`).join('')}<button class="btn danger" data-act="qBulkDel">삭제</button><button class="btn ghost" data-act="qSelNone">선택 해제</button></div></div>` : ''}
+    ${list.length ? `<div class="table-wrap"><table class="t stack"><thead><tr><th><input type="checkbox" data-ch="qSelAll" aria-label="전체 선택" ${list.length && list.every(q => sel.has(q.id)) ? 'checked' : ''}></th><th>질의</th><th>상태</th><th>작업 구분</th><th>목표 매장</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty"><div class="big">🧭</div>${S.queries.length ? '조건에 맞는 질의가 없습니다.' : '조합 생성기로 질의 후보를 만들어 보세요.'}</div>`}
+  </div>`;
+}
+A.genToggle = el => { const set = ui.gen[el.dataset.g]; const v = el.dataset.v; set.has(v) ? set.delete(v) : set.add(v); render(); };
+CH.qTpl = el => { S.settings.queryTemplate = el.value.trim() || '{지역} {테마} {업종} 추천'; saveSettings(); };
+A.genRun = () => { const tplEl = $('#q_tpl'); if (tplEl) { S.settings.queryTemplate = tplEl.value.trim() || S.settings.queryTemplate; saveSettings(); } const c = genCombos(); if (!c) { toast('지역·업종·테마를 각각 1개 이상 고르세요', 'warn'); return; } ui.genPreview = c; render(); };
+A.genClear = () => { ui.genPreview = []; render(); };
+CH.genSel = el => { ui.genPreview[+el.dataset.i].sel = el.checked; render(); };
+CH.genText = el => { const p = ui.genPreview[+el.dataset.i]; p.text = el.value.replace(/\s+/g, ' ').trim(); };
+A.genAdd = async () => {
+  const pick = ui.genPreview.filter(p => p.sel && !p.dup && p.text);
+  const keys = new Set(S.queries.map(q => qKey(q.text))); const add = [];
+  for (const p of pick) { const k = qKey(p.text); if (keys.has(k)) continue; keys.add(k); add.push({ id: uid('q_'), text: p.text, region: p.region, category: p.category, theme: p.theme, status: '후보', targets: [], workType: '', createdAt: nowISO() }); }
+  if (!add.length) { toast('추가할 새 질의가 없습니다', 'warn'); return; }
+  await putMany('queries', add); ui.genPreview = []; toast(`질의 후보 ${add.length}개를 추가했습니다`); render();
+};
+function queryFields(q = {}) {
+  return [
+    { id: 'text', label: '질의 문장', required: true, value: q.text || '', autofocus: true, placeholder: '예: 신도림 회식 고깃집 추천' },
+    { id: 'region', label: '지역', value: q.region || '', list: S.settings.regions },
+    { id: 'category', label: '업종', value: q.category || '', list: S.settings.categories },
+    { id: 'theme', label: '테마', value: q.theme || '', list: S.settings.themes },
+    { id: 'status', label: '상태', type: 'select', options: Q_STATUS, value: q.status || '후보' },
+    { id: 'workType', label: '작업 구분', type: 'select', options: [['', '미지정'], ['공략', '공략 (빈 곳)'], ['유지', '유지 (이미 잘 나옴)']], value: q.workType || '' },
+    { id: 'targets', label: '밀고 싶은 매장', type: 'checks', options: S.stores.map(s => [s.id, s.name]), value: q.targets || [] },
+  ];
+}
+const dupCheck = selfId => o => S.queries.some(x => x.id !== selfId && qKey(x.text) === qKey(o.text)) ? '같은 문장의 질의가 이미 있습니다.' : '';
+A.qAdd = async () => {
+  const r = await askForm('질의 추가', queryFields(), '추가', { validate: dupCheck(null) }); if (!r) return;
+  ['region', 'category', 'theme'].forEach((k, i) => addToList(['regions', 'categories', 'themes'][i], r[k]));
+  await put('queries', { id: uid('q_'), ...r, text: r.text.replace(/\s+/g, ' '), createdAt: nowISO() }); render();
+};
+A.qEdit = async el => {
+  const q = byId('queries', el.dataset.id);
+  const r = await askForm('질의 수정', queryFields(q), '저장', { validate: dupCheck(q.id) }); if (!r) return;
+  ['region', 'category', 'theme'].forEach((k, i) => addToList(['regions', 'categories', 'themes'][i], r[k]));
+  Object.assign(q, r, { text: r.text.replace(/\s+/g, ' ') }); await put('queries', q); render();
+};
+A.qTargets = async el => {
+  const q = byId('queries', el.dataset.id);
+  const r = await askForm('밀고 싶은 매장', [{ id: 'targets', label: q.text, type: 'checks', options: S.stores.map(s => [s.id, s.name]), value: q.targets || [] }]); if (!r) return;
+  q.targets = r.targets; await put('queries', q); render();
+};
+A.qDel = async el => { const q = byId('queries', el.dataset.id); if (!await ask('질의 삭제', `"${q.text}"을(를) 삭제할까요?\n이미 만든 측정 회차의 기록은 유지됩니다.`, { ok: '삭제', danger: true })) return; await del('queries', q.id); ui.qsel.delete(q.id); render(); };
+CH.qStatus = async el => { const q = byId('queries', el.dataset.id); q.status = el.value; await put('queries', q); render(); if (q.status === '운영 중' && runningQueries().length === 61) toast('운영 중 질의가 60개를 넘었습니다', 'warn'); };
+CH.qWork = async el => { const q = byId('queries', el.dataset.id); q.workType = el.value; await put('queries', q); };
+CH.qFilter = el => { ui.qf[el.dataset.k] = el.value.trim(); render(); };
+CH.qSel = el => { el.checked ? ui.qsel.add(el.dataset.id) : ui.qsel.delete(el.dataset.id); render(); };
+CH.qSelAll = el => { filteredQueries().forEach(q => el.checked ? ui.qsel.add(q.id) : ui.qsel.delete(q.id)); render(); };
+A.qSelNone = () => { ui.qsel.clear(); render(); };
+A.qBulk = async el => { const l = [...ui.qsel].map(id => byId('queries', id)).filter(Boolean); l.forEach(q => q[el.dataset.k] = el.dataset.v); await putMany('queries', l); toast(`${l.length}개를 "${el.dataset.v}"(으)로 바꿨습니다`); render(); };
+A.qBulkDel = async () => { const ids = [...ui.qsel]; if (!await ask('질의 삭제', `선택한 질의 ${ids.length}개를 삭제할까요?`, { ok: '삭제', danger: true })) return; await delMany('queries', ids); ui.qsel.clear(); render(); };
+
+/* =========================================================
+   F-03 측정 회차·답변 수집
+   ========================================================= */
+const LOGIN_OPT = ['로그인', '비로그인', '섞여 있음'];
+const WEB_OPT = ['사용', '미사용', '모름'];
+const ansId = (rid, qid, ai) => `${rid}|${qid}|${ai}`;
+const getAns = (rid, qid, ai) => byId('answers', ansId(rid, qid, ai));
+const roundQ = (r, qid) => r.queries.find(q => q.id === qid);
+const isBaseline = r => roundsSorted()[0]?.id === r.id;
+function roundProgress(r) { const set = new Set(r.ais); const got = S.answers.filter(a => a.roundId === r.id && set.has(a.ai)).length; return [got, r.queries.length * r.ais.length]; }
+function qText(id) { const q = byId('queries', id); if (q) return q.text; for (const r of S.rounds) { const x = roundQ(r, id); if (x) return x.text; } return ''; }
+function cellState(a) { return !a ? '미수집' : a.done ? '확인 완료' : '수집됨'; }
+
+function vRounds() {
+  const list = roundsSorted().reverse();
+  const cards = list.map(r => {
+    const [got, tot] = roundProgress(r); const st = roundStats(r);
+    return `<a class="card" href="#round/${r.id}" style="display:block;text-decoration:none;color:inherit">
+      <div class="card-head"><h2>${esc(r.name)}</h2>${isBaseline(r) ? badge('기준점', 'pri') : ''}${tot && got === tot ? badge('수집 완료', 'ok') : badge(`${got} / ${tot}`, '')}</div>
+      <p class="muted small" style="margin:-6px 0 10px">${esc(r.date)} · 측정자 ${esc(r.measurer || '미기록')} · 질의 ${r.queries.length}개 × AI ${r.ais.length}곳 (${r.ais.map(esc).join(', ')})</p>
+      <div class="grid2"><div><div class="small muted">수집 진행률</div>${meter(got, tot)}</div><div><div class="small muted">노출률 (수집된 답변 기준)</div>${meter(st.e, st.n, 'ok')}</div></div></a>`;
+  }).join('');
+  return `${pageHead('측정 회차', '회차를 만들면 그 시점의 "운영 중" 질의가 고정됩니다. 첫 회차가 기준점입니다.', `<button class="btn primary" data-act="roundAdd">+ 새 회차</button>`)}
+  ${cards || `<div class="card empty"><div class="big">📏</div><p>아직 측정 회차가 없습니다.</p><p class="small">질의를 "운영 중"으로 둔 뒤 새 회차를 만드세요. (지금 운영 중 ${runningQueries().length}개)</p><button class="btn primary" data-act="roundAdd">+ 첫 회차(기준점) 만들기</button></div>`}`;
+}
+A.roundAdd = async () => {
+  const run = runningQueries();
+  if (!run.length) { toast('"운영 중" 질의가 없습니다. 질의 화면에서 먼저 지정하세요.', 'warn', 3500); go('queries'); return; }
+  if (!S.settings.ais.length) { toast('설정에서 측정 AI를 1곳 이상 추가하세요', 'warn'); return; }
+  const r = await askForm('새 측정 회차', [
+    { id: 'name', label: '회차 이름', required: true, value: `${today().slice(0, 7)} ${S.rounds.length ? '측정' : '기준점'}`, autofocus: true },
+    { id: 'date', label: '측정일', type: 'date', required: true, value: today() },
+    { id: 'measurer', label: '측정자', value: ui.lastChecker },
+    { id: 'ais', label: '측정 AI', type: 'checks', options: S.settings.ais, value: S.settings.ais, required: true },
+    { id: 'loggedIn', label: 'AI 로그인 여부', type: 'select', options: LOGIN_OPT, value: '로그인' },
+    { id: 'webSearch', label: '웹 검색 사용 여부', type: 'select', options: WEB_OPT, value: '사용' },
+    { id: 'memo', label: '조건 메모', type: 'textarea', rows: 2, placeholder: '예: 시크릿 창, 기본 모델, 위치 서울' },
+  ], '회차 만들기', { intro: `<div class="notice info"><div class="grow">운영 중 질의 <b>${run.length}개</b>가 이 회차 대상으로 고정됩니다. 회차를 만든 뒤 추가한 질의는 이 회차에 들어가지 않습니다.</div></div>` });
+  if (!r) return;
+  if (r.measurer) ui.lastChecker = r.measurer;
+  const round = {
+    id: uid('rd_'), name: r.name, date: r.date, measurer: r.measurer, loggedIn: r.loggedIn, webSearch: r.webSearch, memo: r.memo,
+    ais: S.settings.ais.filter(a => r.ais.includes(a)),
+    queries: run.map(q => ({ id: q.id, text: q.text, region: q.region || '', category: q.category || '', theme: q.theme || '', targets: [...(q.targets || [])], workType: q.workType || '' })),
+    createdAt: nowISO(),
+  };
+  await put('rounds', round); go('round/' + round.id);
+};
+
+function vRound(id) {
+  const r = byId('rounds', id); if (!r) return notFound('측정 회차');
+  const [got, tot] = roundProgress(r); const st = roundStats(r);
+  const f = ui.roundFilter;
+  const rows = r.queries.filter(q => {
+    if (f === 'all') return true;
+    const as = r.ais.map(ai => getAns(r.id, q.id, ai));
+    if (f === 'empty') return as.some(a => !a);
+    if (f === 'notExposed') return as.some(a => a && !a.exposed);
+    if (f === 'unchecked') return as.some(a => a && !a.done);
+    return true;
+  }).map(q => `<tr><td class="mc" data-label="질의"><div class="copy-row"><button class="btn ghost icon" data-act="copy" data-text="${esc(q.text)}" title="질의 복사" aria-label="질의 복사">${icon('copy', 18)}</button><div class="qtext">${esc(q.text)}<div class="qmeta">${[q.region, q.theme].filter(Boolean).map(esc).join(' · ')}${q.targets.length ? ` · 목표 ${q.targets.map(t => esc(storeName(t))).join(', ')}` : ''}</div></div></div></td>
+    ${r.ais.map(ai => `<td data-label="${esc(ai)}">${cellHtml(r, q, ai)}</td>`).join('')}</tr>`).join('');
+  const chip = (k, l) => `<button class="chip ${f === k ? 'on' : ''}" data-act="roundFilter" data-v="${k}">${l}</button>`;
+  return `${pageHead(r.name, `${esc(r.date)} · 측정자 ${esc(r.measurer || '미기록')} ${isBaseline(r) ? badge('기준점', 'pri') : ''}`, `<a class="btn" href="#rounds">← 회차 목록</a><button class="btn" data-act="roundEdit" data-id="${r.id}">조건 수정</button><button class="btn soft" data-act="toDash" data-id="${r.id}">현황 보기</button>`)}
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card"><h2>진행률</h2>${meter(got, tot)}<p class="small muted" style="margin:8px 0 0">${got} / ${tot}칸 수집 · 확인 완료 ${S.answers.filter(a => a.roundId === r.id && a.done).length}칸 · 지금까지 노출률 ${pctTxt(st.e, st.n)}</p>
+      ${got < tot ? `<button class="btn primary" style="margin-top:12px" data-act="ansNext" data-id="${r.id}">다음 미수집 칸 열기</button>` : ''}</div>
+    <div class="card"><h2>측정 조건</h2><p class="small" style="margin:0">로그인: <b>${esc(r.loggedIn || '미기록')}</b> · 웹 검색: <b>${esc(r.webSearch || '미기록')}</b> · AI: ${r.ais.map(esc).join(', ')}</p>${r.memo ? `<p class="small muted" style="margin:6px 0 0;white-space:pre-wrap">${esc(r.memo)}</p>` : ''}
+      <p class="hint" style="margin:8px 0 0">같은 질문에도 답이 달라지므로 조건을 남겨 둡니다.</p></div>
+  </div>
+  <div class="card"><div class="card-head"><h2>질의 × AI</h2><div class="chips">${chip('all', '전체')}${chip('empty', '미수집 있음')}${chip('notExposed', '미노출 있음')}${chip('unchecked', '확인 전 있음')}</div></div>
+    <p class="hint" style="margin-top:-4px">복사 버튼으로 질의를 복사해 각 AI에 묻고, 칸을 눌러 답변을 붙여넣으세요. 휴대폰 AI 앱에서 복사해 바로 넣어도 됩니다.</p>
+    ${rows ? `<div class="table-wrap"><table class="t stack"><thead><tr><th>질의</th>${r.ais.map(ai => `<th>${esc(ai)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty">조건에 맞는 칸이 없습니다.</div>'}
+  </div>
+  <div class="card"><h2>회차 관리</h2><div class="actions">
+    <button class="btn" data-act="roundArchive" data-id="${r.id}">답변 원문만 백업 파일로 빼기</button>
+    <button class="btn danger" data-act="roundDel" data-id="${r.id}">회차 삭제</button></div>
+    <p class="hint" style="margin:8px 0 0">원문 빼기: 원문은 파일로 내려받고 앱에서는 지웁니다. 판정 결과·출처는 그대로 남아 현황판·리포트에 쓰입니다.</p></div>`;
+}
+function cellHtml(r, q, ai) {
+  const a = getAns(r.id, q.id, ai);
+  return `<button class="cell ${a ? (a.done ? 'done' : 'got') : ''}" data-act="ansOpen" data-r="${r.id}" data-q="${q.id}" data-ai="${esc(ai)}" aria-label="${esc(q.text)} · ${esc(ai)} · ${cellState(a)}"><span class="st">${cellState(a)}</span>${a ? `<span>${a.exposed ? badge('노출' + (a.order ? ` ${a.order}번째` : ''), 'ok') : badge('미노출', 'err')}</span><span class="small muted">출처 ${(a.sources || []).length}${a.manual ? ' · 수동 수정' : ''}${a.confusion ? ' · 혼동' : ''}</span>` : ''}</button>`;
+}
+A.roundFilter = el => { ui.roundFilter = el.dataset.v; render(); };
+A.toDash = el => { ui.dashRound = el.dataset.id; go('dashboard'); };
+A.roundEdit = async el => {
+  const r = byId('rounds', el.dataset.id);
+  const used = new Set(S.answers.filter(a => a.roundId === r.id).map(a => a.ai));
+  const v = await askForm('측정 조건 수정', [
+    { id: 'name', label: '회차 이름', required: true, value: r.name },
+    { id: 'date', label: '측정일', type: 'date', required: true, value: r.date },
+    { id: 'measurer', label: '측정자', value: r.measurer },
+    { id: 'ais', label: '측정 AI', type: 'checks', options: uniq([...r.ais, ...S.settings.ais]), value: r.ais, required: true },
+    { id: 'loggedIn', label: 'AI 로그인 여부', type: 'select', options: LOGIN_OPT, value: r.loggedIn },
+    { id: 'webSearch', label: '웹 검색 사용 여부', type: 'select', options: WEB_OPT, value: r.webSearch },
+    { id: 'memo', label: '조건 메모', type: 'textarea', rows: 2, value: r.memo },
+  ], '저장', { validate: o => { const gone = [...used].filter(a => !o.ais.includes(a)); return gone.length ? `답변이 있는 AI(${gone.join(', ')})는 뺄 수 없습니다.` : ''; } });
+  if (!v) return;
+  Object.assign(r, v, { ais: uniq([...r.ais.filter(a => v.ais.includes(a)), ...v.ais]) });
+  await put('rounds', r); render();
+};
+A.roundDel = async el => {
+  const r = byId('rounds', el.dataset.id); const ids = S.answers.filter(a => a.roundId === r.id).map(a => a.id);
+  if (!await ask('회차 삭제', `"${r.name}" 회차와 답변 ${ids.length}개를 삭제할까요? 되돌릴 수 없습니다.\n필요하면 먼저 설정에서 전체 백업을 받으세요.`, { ok: '삭제', danger: true })) return;
+  await delMany('answers', ids); await del('rounds', r.id); go('rounds');
+};
+A.roundArchive = async el => {
+  const r = byId('rounds', el.dataset.id);
+  const list = S.answers.filter(a => a.roundId === r.id && a.raw);
+  if (!list.length) { toast('앱에 남아 있는 답변 원문이 없습니다', 'warn'); return; }
+  if (!await ask('답변 원문 빼기', `"${r.name}"의 답변 원문 ${list.length}개를 파일로 내려받고 앱에서는 지웁니다.\n노출 판정·출처 결과는 그대로 남습니다. 계속할까요?`, { ok: '내려받고 정리' })) return;
+  download(`geo-answers-${safeFile(r.name)}-${today()}.json`, JSON.stringify({ app: 'geo-console-answers', round: { id: r.id, name: r.name, date: r.date }, exportedAt: nowISO(), answers: list.map(a => ({ id: a.id, query: roundQ(r, a.queryId)?.text || '', ai: a.ai, collectedAt: a.collectedAt, raw: a.raw })) }, null, 2), 'application/json');
+  const upd = list.map(a => ({ ...a, raw: '', archived: true }));
+  if (await putMany('answers', upd)) toast(`원문 ${list.length}개를 정리했습니다`);
+  render();
+};
+
+/* ---------- 답변 붙여넣기 창 ---------- */
+function nextEmpty(r, qid, ai) {
+  const cells = []; r.queries.forEach(q => r.ais.forEach(x => cells.push({ qid: q.id, ai: x })));
+  const start = qid ? cells.findIndex(c => c.qid === qid && c.ai === ai) : -1;
+  for (let k = 1; k <= cells.length; k++) { const c = cells[(start + k + cells.length) % cells.length]; if (!getAns(r.id, c.qid, c.ai)) return c; }
+  return null;
+}
+A.ansNext = el => { const r = byId('rounds', el.dataset.id); const n = nextEmpty(r, null, null); if (n) openAnswer(r.id, n.qid, n.ai); else toast('모든 칸을 수집했습니다'); };
+A.ansOpen = el => openAnswer(el.dataset.r, el.dataset.q, el.dataset.ai);
+function openAnswer(rid, qid, ai) {
+  const r = byId('rounds', rid); const q = roundQ(r, qid); const a = getAns(rid, qid, ai);
+  const [got, tot] = roundProgress(r);
+  const body = `<div class="copy-row" style="margin-bottom:10px"><button class="btn soft" data-act="copy" data-text="${esc(q.text)}">${icon('copy', 18)} 질의 복사</button><div class="qtext" style="padding-top:8px">${esc(q.text)}<div class="qmeta">${badge(ai, 'pri')} · 진행 ${got} / ${tot}${q.targets.length ? ` · 목표 매장: ${q.targets.map(t => esc(storeName(t))).join(', ')}` : ''}</div></div></div>
+    ${a?.archived && !a.raw ? `<div class="notice info"><div class="grow">이 답변의 원문은 백업 파일로 옮겨졌습니다. 판정 결과만 남아 있습니다.</div></div>` : ''}
+    <div class="field"><label for="ans_raw">${esc(ai)} 답변 원문</label><textarea id="ans_raw" rows="9" autofocus placeholder="AI 답변 전체를 붙여넣으세요. 링크가 있으면 함께 붙여넣어야 출처를 찾을 수 있습니다.">${esc(a?.raw || '')}</textarea><small class="hint">Ctrl+Enter: 저장하고 다음 미수집 칸으로. 붙여넣은 내용은 글자로만 보이며 실행되지 않습니다.</small></div>
+    ${a ? judgeForm(a, q) : '<p class="hint">저장하면 노출 여부·노출 매장·언급 순서·인용 출처를 자동으로 판정합니다.</p>'}`;
+  const foot = `${a ? `<button class="btn ghost danger" data-act="ansDel">비우기</button><button class="btn ghost" data-act="ansRejudge" ${a.raw ? '' : 'disabled'}>자동 판정 다시</button>` : ''}<span class="spacer"></span><button class="btn" data-act="ansSave">저장</button><button class="btn primary" data-act="ansSaveNext">저장하고 다음</button>`;
+  openModal(`${r.name} · 답변`, body, { wide: true, foot });
+  ui.ans = { rid, qid, ai, dirtyJ: false };
+}
+function judgeForm(a, q) {
+  const dictNames = S.settings.sourceDict.map(d => d.name);
+  const srcOpts = uniq([...dictNames, ...(a.sources || [])]);
+  return `<hr><div class="card-head" style="margin-bottom:6px"><h3 style="margin:0;flex:1">판정 결과</h3>${a.manual ? badge('수동 수정', 'warn') : badge('자동 판정', 'info')}</div>
+  <p class="small muted" style="margin:0 0 10px">${a.exposed ? `노출됨 — ${a.stores.map(s => esc(storeName(s))).join(', ')}${a.order ? ` · 목록 ${a.order}번째` : ' · 목록 밖 언급'}` : '우리 매장이 나오지 않았습니다.'}${a.targetHit === true ? ' · 목표 매장 노출' : a.targetHit === false ? ' · 목표 매장 미노출' : ''}</p>
+  <div data-ch="ansJ"><label class="check"><input type="checkbox" id="ans_exposed" ${a.exposed ? 'checked' : ''}> 우리 매장 노출</label>
+  <div class="field"><label>노출 매장</label><div class="checks" id="ans_stores">${S.stores.map(s => `<label class="check"><input type="checkbox" value="${s.id}" ${a.stores.includes(s.id) ? 'checked' : ''}> ${esc(s.name)}</label>`).join('')}</div></div>
+  <div class="frow"><div class="field"><label for="ans_order">언급 순서 (비우면 목록 밖)</label><input type="number" id="ans_order" min="1" inputmode="numeric" value="${a.order ?? ''}"></div></div>
+  <div class="field"><label>인용 출처</label><div class="checks" id="ans_src">${srcOpts.map(n => `<label class="check"><input type="checkbox" value="${esc(n)}" ${(a.sources || []).includes(n) ? 'checked' : ''}> ${esc(n)}</label>`).join('')}</div></div>
+  <div class="field"><label for="ans_srcAdd">다른 출처 추가 (쉼표로 구분)</label><input type="text" id="ans_srcAdd" placeholder="예: 식신, 블로그 OO"></div></div>
+  <label class="check"><input type="checkbox" id="ans_conf" ${a.confusion ? 'checked' : ''}> 브랜드 혼동 (예: 월화갈비 질의에 월화고기가 나옴)</label>
+  <div class="field"><label for="ans_comp">경쟁 매장 메모 (선택)</label><input type="text" id="ans_comp" value="${esc(a.competitors || '')}" placeholder="답변에 함께 나온 다른 가게"></div>
+  <label class="check"><input type="checkbox" id="ans_done" ${a.done ? 'checked' : ''}> 판정 확인 완료</label>`;
+}
+CH.ansJ = () => { if (ui.ans) ui.ans.dirtyJ = true; };
+A.ansSave = () => saveAnswer(false);
+A.ansSaveNext = () => saveAnswer(true);
+async function saveAnswer(next) {
+  const c = ui.ans; if (!c) return;
+  const r = byId('rounds', c.rid); const q = roundQ(r, c.qid); const id = ansId(c.rid, c.qid, c.ai);
+  const old = byId('answers', id); const raw = $('#ans_raw').value;
+  if (!raw.trim() && !old?.archived) {
+    if (!old) { toast('답변을 붙여넣으세요', 'warn'); return; }
+    if (!await ask('칸 비우기', '답변 원문이 비어 있습니다. 이 칸을 "미수집"으로 되돌릴까요?', { ok: '비우기', danger: true })) { openAnswer(c.rid, c.qid, c.ai); return; }
+    await del('answers', id); render(); return;
+  }
+  const a = old ? { ...old } : { id, roundId: c.rid, queryId: c.qid, ai: c.ai, collectedAt: nowISO(), manual: false, done: false, confusion: false, competitors: '' };
+  const rawChanged = !!raw.trim() && raw !== (old?.raw || '');
+  if (raw.trim()) a.raw = raw;
+  if (old && c.dirtyJ) {
+    const stores = $$('#ans_stores input:checked').map(x => x.value);
+    const sources = uniq([...$$('#ans_src input:checked').map(x => x.value), ...splitList($('#ans_srcAdd').value)]);
+    const ord = parseInt($('#ans_order').value, 10);
+    Object.assign(a, { stores, sources, exposed: stores.length > 0 || $('#ans_exposed').checked, order: ord > 0 ? ord : null, targetHit: q.targets.length ? q.targets.some(t => stores.includes(t)) : null, manual: true });
+  } else if (rawChanged) {
+    Object.assign(a, judge(raw, q), { manual: false });
+    if (old) a.collectedAt = nowISO();
+    if (old?.manual) toast('원문이 바뀌어 자동 판정을 다시 했습니다', 'warn', 3500);
+  }
+  if (old) { a.confusion = $('#ans_conf').checked; a.competitors = $('#ans_comp').value.trim(); a.done = $('#ans_done').checked; }
+  if (!await put('answers', a)) return;
+  closeModal(); render();
+  toast(`저장: ${a.exposed ? `노출 (${a.stores.map(storeName).join(', ')})` : '미노출'} · 출처 ${a.sources.length}개`);
+  if (next) { const n = nextEmpty(r, c.qid, c.ai); if (n) openAnswer(r.id, n.qid, n.ai); else toast('모든 칸을 수집했습니다'); }
+}
+A.ansRejudge = async () => {
+  const c = ui.ans; const a = getAns(c.rid, c.qid, c.ai); if (!a?.raw) return;
+  const r = byId('rounds', c.rid);
+  Object.assign(a, judge(a.raw, roundQ(r, c.qid)), { manual: false });
+  await put('answers', a); render(); openAnswer(c.rid, c.qid, c.ai); toast('자동 판정을 다시 했습니다');
+};
+A.ansDel = async () => {
+  const c = ui.ans;
+  if (!await ask('칸 비우기', '이 칸의 답변과 판정을 지우고 "미수집"으로 되돌릴까요?', { ok: '비우기', danger: true })) { openAnswer(c.rid, c.qid, c.ai); return; }
+  await del('answers', ansId(c.rid, c.qid, c.ai)); render();
+};
+
+/* =========================================================
+   F-04 노출 판정·출처 추출 (같은 입력 → 항상 같은 결과)
+   ========================================================= */
+const URL_RE = /\bhttps?:\/\/[^\s<>"'()\[\]{}]+/gi;
+const BARE_RE = /\b(?:[a-z0-9-]+\.)+(?:com|net|org|kr|me|to|be|page|gl|io|ly)\b(?:\/[^\s<>"'()\[\]{}]*)?/gi;
+function hostOf(u) { try { return new URL(/^https?:/i.test(u) ? u : 'http://' + u).hostname.toLowerCase().replace(/^www\./, '').replace(/\.+$/, ''); } catch (_) { return ''; } }
+const officialName = () => S.settings.sourceDict.find(d => /공식/.test(d.name))?.name || '공식 홈페이지';
+function siteHosts() { return uniq([S.settings.siteUrl, ...S.stores.map(s => s.pageUrl)].map(safeUrl).filter(Boolean).map(hostOf).filter(Boolean)); }
+function hostToSource(host, sh) {
+  if (sh.some(h => host === h || host.endsWith('.' + h))) return officialName();
+  let best = null, bl = 0;
+  for (const d of S.settings.sourceDict) for (const dom of d.domains) {
+    const x = dom.toLowerCase().replace(/^www\./, '');
+    if (x && (host === x || host.endsWith('.' + x)) && x.length > bl) { best = d.name; bl = x.length; }
+  }
+  return best;
+}
+function listOrder(text, aliasesC) {
+  const lines = text.split(/\r?\n/);
+  const pats = [/^\s{0,3}(?:\*\*)?\d{1,2}\s*[.)]\s*/, /^\s{0,3}#{1,6}\s+/, /^[-*•·]\s+/];
+  for (const p of pats) {
+    const items = lines.filter(l => p.test(l));
+    if (items.length < 2) continue;
+    const i = items.findIndex(l => { const c = compact(l); return aliasesC.some(a => c.includes(a)); });
+    if (i >= 0) return i + 1;
+  }
+  return null;
+}
+function judge(raw, q) {
+  const text = String(raw || ''); const ctext = compact(text);
+  const hits = [];
+  for (const st of S.stores) {
+    let pos = -1;
+    for (const al of st.aliases) { const c = compact(al); if (c.length < 2) continue; const i = ctext.indexOf(c); if (i >= 0 && (pos < 0 || i < pos)) pos = i; }
+    if (pos >= 0) hits.push({ id: st.id, pos });
+  }
+  hits.sort((a, b) => a.pos - b.pos || a.id.localeCompare(b.id));
+  const stores = hits.map(h => h.id);
+  const ourAliases = S.stores.filter(s => stores.includes(s.id)).flatMap(s => s.aliases).map(compact).filter(c => c.length >= 2);
+  const order = stores.length ? listOrder(text, ourAliases) : null;
+  const hosts = new Set();
+  for (const m of text.matchAll(URL_RE)) { const h = hostOf(m[0]); if (h) hosts.add(h); }
+  for (const m of text.matchAll(BARE_RE)) { if (text[m.index - 1] === '@') continue; const h = hostOf(m[0]); if (h) hosts.add(h); }
+  const sh = siteHosts(); const found = new Set();
+  hosts.forEach(h => found.add(hostToSource(h, sh) || h));
+  for (const d of S.settings.sourceDict) if (d.aliases.some(a => compact(a).length >= 2 && ctext.includes(compact(a)))) found.add(d.name);
+  const dictOrder = S.settings.sourceDict.map(d => d.name);
+  const sources = [...found].sort((a, b) => { const ia = dictOrder.indexOf(a), ib = dictOrder.indexOf(b); return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || a.localeCompare(b); });
+  const targets = q?.targets || [];
+  return { exposed: stores.length > 0, stores, order, targetHit: targets.length ? targets.some(t => stores.includes(t)) : null, sources };
+}
+
+/* =========================================================
+   F-05 노출 현황판
+   ========================================================= */
+function roundStats(r) {
+  const ais = new Set(r.ais);
+  const ans = S.answers.filter(a => a.roundId === r.id && ais.has(a.ai));
+  const qmap = new Map(r.queries.map(q => [q.id, q]));
+  const st = { n: 0, e: 0, tn: 0, te: 0, byAI: {}, byRegion: {}, byTheme: {}, src: {} };
+  r.ais.forEach(ai => st.byAI[ai] = { n: 0, e: 0 });
+  const byQ = new Map();
+  for (const a of ans) {
+    const q = qmap.get(a.queryId); if (!q) continue;
+    if (!byQ.has(q.id)) byQ.set(q.id, []); byQ.get(q.id).push(a);
+    st.n++; if (a.exposed) st.e++;
+    if (q.targets?.length) { st.tn++; if (a.targetHit) st.te++; }
+    for (const [k, key] of [['byAI', a.ai], ['byRegion', q.region || '미분류'], ['byTheme', q.theme || '미분류']]) { const g = st[k][key] || (st[k][key] = { n: 0, e: 0 }); g.n++; if (a.exposed) g.e++; }
+    for (const s of a.sources || []) { const g = st.src[s] || (st.src[s] = { n: 0, us: 0 }); g.n++; if (a.exposed) g.us++; }
+  }
+  st.queries = r.queries.map(q => {
+    const got = byQ.get(q.id) || []; const ex = got.filter(a => a.exposed);
+    const kind = ex.length ? (ex.length === r.ais.length ? 'full' : 'partial') : (got.length === r.ais.length ? 'empty' : 'pending');
+    return { q, got: got.length, ex: ex.length, exAIs: ex.map(a => a.ai), byAI: Object.fromEntries(got.map(a => [a.ai, a])), kind };
+  });
+  st.srcRank = Object.entries(st.src).map(([name, g]) => ({ name, ...g })).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, 'ko'));
+  return st;
+}
+const groupRows = (obj, keys) => (keys || Object.keys(obj).sort((a, b) => obj[b].n - obj[a].n || a.localeCompare(b, 'ko'))).map(k => { const g = obj[k] || { n: 0, e: 0 }; return `<tr><td data-label="구분"><b>${esc(k)}</b></td><td data-label="노출 / 수집" class="num">${g.e} / ${g.n}</td><td data-label="노출률" style="min-width:180px">${meter(g.e, g.n, 'ok')}</td></tr>`; }).join('');
+const groupTable = (title, obj, keys) => `<div class="card"><h2>${title}</h2><div class="table-wrap"><table class="t stack"><thead><tr><th>구분</th><th class="num">노출 / 수집</th><th>노출률</th></tr></thead><tbody>${groupRows(obj, keys) || '<tr><td colspan="3" class="muted">데이터 없음</td></tr>'}</tbody></table></div></div>`;
+const articlesForQuery = qid => S.articles.filter(a => a.queryIds.includes(qid));
+function vDash() {
+  const rs = roundsSorted();
+  if (!rs.length) return `${pageHead('노출 현황판')}<div class="card empty"><div class="big">📊</div><p>측정 회차가 없습니다.</p><a class="btn primary" href="#rounds">측정 회차 만들기</a></div>`;
+  const r = byId('rounds', ui.dashRound) || rs[rs.length - 1];
+  const st = roundStats(r); const [got, tot] = roundProgress(r);
+  const empty = st.queries.filter(x => x.kind === 'empty'), partial = st.queries.filter(x => x.kind === 'partial'), pending = st.queries.filter(x => x.kind === 'pending');
+  const artBtn = q => { const l = articlesForQuery(q.id); return l.length ? `<a class="btn ghost" href="#article/${l[0].id}">글 ${l.length}개 보기</a>` : `<button class="btn soft" data-act="artFromQuery" data-q="${q.id}" data-r="${r.id}">글 작업 만들기</button>`; };
+  const qLi = (x, extra) => `<li><div class="grow"><div class="qtext">${esc(x.q.text)}</div><div class="qmeta">${[x.q.region, x.q.theme, x.q.workType].filter(Boolean).map(esc).join(' · ')}${extra ? ' · ' + extra : ''}</div></div>${artBtn(x.q)}</li>`;
+  const srcRows = st.srcRank.map((s, i) => `<tr><td data-label="순위" class="num">${i + 1}</td><td data-label="출처"><b>${esc(s.name)}</b></td><td data-label="등장 답변" class="num">${s.n}</td><td data-label="우리 매장 동반" style="min-width:180px">${meter(s.us, s.n, 'ok')}</td></tr>`).join('');
+  const sym = a => !a ? '<span class="muted" title="미수집">—</span>' : a.exposed ? badge('노출', 'ok') : badge('없음', 'err');
+  const qRows = st.queries.map(x => `<tr><td class="mc" data-label="질의"><span class="qtext">${esc(x.q.text)}</span></td>${r.ais.map(ai => `<td data-label="${esc(ai)}">${sym(x.byAI[ai])}</td>`).join('')}<td data-label="노출" class="num">${x.ex} / ${x.got}</td></tr>`).join('');
+  return `${pageHead('노출 현황판', `회차: ${esc(r.name)} (${esc(r.date)})`, `<div class="field" style="margin:0;min-width:220px"><select data-ch="dashRound" aria-label="회차 선택">${opts(rs.slice().reverse().map(x => [x.id, `${x.name} · ${x.date}`]), r.id)}</select></div>`)}
+  ${DISCLAIMER}
+  <div class="kpis">
+    <div class="kpi"><div class="label">노출률</div><div class="val">${pctTxt(st.e, st.n)}</div><div class="small muted">${st.e} / ${st.n} 답변</div></div>
+    <div class="kpi"><div class="label">목표 매장 노출률</div><div class="val">${pctTxt(st.te, st.tn)}</div><div class="small muted">${st.te} / ${st.tn} (목표 매장을 지정한 질의 답변)</div></div>
+    <a class="kpi" href="#round/${r.id}"><div class="label">수집 진행</div><div class="val">${got}<small> / ${tot}</small></div>${meter(got, tot)}</a>
+    <div class="kpi"><div class="label">빈 질의</div><div class="val">${empty.length}<small>개</small></div><div class="small muted">일부만 노출 ${partial.length} · 판단 보류 ${pending.length}</div></div>
+  </div>
+  <div class="grid2" style="margin-bottom:16px">${groupTable('AI별', st.byAI, r.ais)}${groupTable('지역별', st.byRegion)}</div>
+  ${groupTable('테마별', st.byTheme)}
+  <div class="card"><div class="card-head"><h2>인용 출처 순위</h2><span class="hint">링크 도메인 + 출처 사전의 이름으로 찾았습니다.</span></div>
+    ${srcRows ? `<div class="table-wrap"><table class="t stack"><thead><tr><th class="num">순위</th><th>출처</th><th class="num">등장 답변</th><th>우리 매장이 함께 나온 비율</th></tr></thead><tbody>${srcRows}</tbody></table></div>` : '<p class="muted">아직 찾은 출처가 없습니다.</p>'}</div>
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card"><h2>모든 AI에서 안 나온 질의 ${badge(empty.length, empty.length ? 'err' : 'ok')}</h2>${empty.length ? `<ul class="list">${empty.map(x => qLi(x)).join('')}</ul>` : '<p class="muted">없습니다.</p>'}</div>
+    <div class="card"><h2>일부 AI에서만 나온 질의 ${badge(partial.length, partial.length ? 'warn' : '')}</h2>${partial.length ? `<ul class="list">${partial.map(x => qLi(x, `${x.exAIs.map(esc).join(', ')}에서만 노출`)).join('')}</ul>` : '<p class="muted">없습니다.</p>'}</div>
+  </div>
+  ${pending.length ? `<div class="notice warn"><div class="grow"><b>판단 보류 ${pending.length}개</b> — 미수집 칸이 있어 빈 질의인지 아직 알 수 없습니다. <a href="#round/${r.id}">측정 이어하기</a></div></div>` : ''}
+  <div class="card"><h2>질의별</h2><div class="table-wrap"><table class="t stack"><thead><tr><th>질의</th>${r.ais.map(ai => `<th>${esc(ai)}</th>`).join('')}<th class="num">노출</th></tr></thead><tbody>${qRows}</tbody></table></div></div>`;
+}
+CH.dashRound = el => { ui.dashRound = el.value; render(); };
+A.artFromQuery = async el => {
+  const r = byId('rounds', el.dataset.r); const q = (r && roundQ(r, el.dataset.q)) || byId('queries', el.dataset.q); if (!q) return;
+  const visit = ['회식', '데이트', '단체', '혼밥', '주차', '술집'].includes(q.theme);
+  const a = newArticle({ queryIds: [q.id], storeIds: (q.targets || []).filter(id => byId('stores', id)), type: visit ? '방문 가이드' : '매장 소개' });
+  await put('articles', a); go('article/' + a.id);
+};
+
+
+/* =========================================================
+   F-06 답변 글 제작
+   ========================================================= */
+const ART_TYPES = ['매장 소개', '메뉴 안내', '방문 가이드', 'FAQ', '지역 큐레이션'];
+const ART_ST = { draft: ['초안', ''], review: ['검수 요청', 'warn'], approved: ['승인', 'ok'], exported: ['내보냄', 'pri'] };
+const TYPE_GUIDE = {
+  '매장 소개': '매장이 어떤 곳인지, 어떤 손님에게 맞는지, 무엇을 먹을 수 있는지를 소개합니다.',
+  '메뉴 안내': '확인된 메뉴를 중심으로 어떤 메뉴가 있고 어떻게 즐기면 좋은지 안내합니다. 가격 숫자는 쓰지 않습니다.',
+  '방문 가이드': '질문 속 상황(회식·데이트·단체 등)에 맞춰 방문 전에 알아 둘 점을 안내합니다.',
+  'FAQ': '질문과 답 형식으로 손님이 자주 궁금해할 내용을 정리합니다.',
+  '지역 큐레이션': '운영 주체가 직접 운영하는 매장들을 지역 기준으로 묶어 안내합니다. 제3자 추천처럼 쓰지 말고, 운영 주체가 직접 소개하는 글임을 분명히 밝힙니다.',
+};
+const artStBadge = a => badge(ART_ST[a.status][0], ART_ST[a.status][1]) + (a.reapprove ? ' ' + badge('다시 승인 필요', 'err') : '');
+function newArticle(p) {
+  return { id: uid('ar_'), queryIds: p.queryIds || [], storeIds: p.storeIds || [], type: p.type || '매장 소개', title: '', summary: '', sections: [], faq: [], meta: '', slug: '', needCheck: [], rawPaste: '', status: 'draft', history: [{ at: nowISO(), status: 'draft', note: '작성 시작' }], approver: '', approvedAt: '', exportedAt: '', publishedAt: '', reapprove: false, createdAt: nowISO(), updatedAt: nowISO() };
+}
+const curArt = () => byId('articles', cur.article);
+const linkedStores = a => a.storeIds.map(id => byId('stores', id)).filter(Boolean);
+
+function vArticles() {
+  const f = ui.artFilter;
+  const list = S.articles.filter(a => !f || a.status === f).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+  const cnt = k => S.articles.filter(a => a.status === k).length;
+  const chip = (k, l) => `<button class="chip ${f === k ? 'on' : ''}" data-act="artFilter" data-v="${k}">${l}</button>`;
+  const rows = list.map(a => {
+    const ch = articleChecks(a); const ne = ch.filter(c => c.level === 'err').length, nw = ch.length - ne;
+    return `<tr><td class="mc" data-label="글"><a class="qtext" href="#article/${a.id}">${esc(a.title || '(제목 없음)')}</a><div class="qmeta">${esc(a.type)} · ${a.queryIds.map(id => esc(qText(id) || '(삭제된 질의)')).join(' / ')}</div></td>
+      <td data-label="매장">${a.storeIds.map(id => `<span class="pill">${esc(storeName(id))}</span>`).join('') || '<span class="muted small">없음</span>'}</td>
+      <td data-label="상태">${artStBadge(a)}</td>
+      <td data-label="검사">${ne ? badge(`오류 ${ne}`, 'err') : ''} ${nw ? badge(`주의 ${nw}`, 'warn') : ''}${!ne && !nw ? badge('통과', 'ok') : ''}</td>
+      <td data-label="게시일">${esc(a.publishedAt) || '<span class="muted">—</span>'}</td>
+      <td data-label="수정">${esc(fmtDate(a.updatedAt))}</td></tr>`;
+  }).join('');
+  return `${pageHead('답변 글', '노출이 빈 질의에 답하는 공식 글을 확인된 정보로만 만듭니다. 초안 → 검수 요청 → 승인 → 내보냄.', `<button class="btn" data-act="dlLlms">llms.txt</button><button class="btn" data-act="dlSitemap">sitemap.xml</button><button class="btn primary" data-act="artAdd">+ 새 글</button>`)}
+  <div class="card"><div class="chips" style="margin-bottom:12px">${chip('', `전체 ${S.articles.length}`)}${Object.entries(ART_ST).map(([k, [l]]) => chip(k, `${l} ${cnt(k)}`)).join('')}</div>
+  ${rows ? `<div class="table-wrap"><table class="t stack"><thead><tr><th>글</th><th>매장</th><th>상태</th><th>검사</th><th>게시일</th><th>수정</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty"><div class="big">✍️</div>${S.articles.length ? '해당 상태의 글이 없습니다.' : '현황판의 빈 질의에서 "글 작업 만들기"를 누르거나 새 글을 만드세요.'}</div>`}</div>`;
+}
+A.artFilter = el => { ui.artFilter = el.dataset.v; render(); };
+function artLinkFields(a = {}) {
+  const qOpts = uniq([...(a.queryIds || []), ...S.queries.map(q => q.id)]).map(id => [id, qText(id) || '(삭제된 질의)']);
+  return [
+    { id: 'queryIds', label: '연결 질의 (1개 이상)', type: 'checks', options: qOpts, value: a.queryIds || [], required: true },
+    { id: 'storeIds', label: '연결 매장', type: 'checks', options: S.stores.map(s => [s.id, s.name]), value: a.storeIds || [] },
+    { id: 'type', label: '글 유형', type: 'select', options: ART_TYPES, value: a.type || '매장 소개' },
+  ];
+}
+A.artAdd = async () => {
+  if (!S.queries.length) { toast('먼저 질의를 만드세요. 글은 질의 1개 이상과 연결됩니다.', 'warn', 3500); return; }
+  const r = await askForm('새 글', artLinkFields(), '만들기', { wide: true }); if (!r) return;
+  const a = newArticle(r); await put('articles', a); go('article/' + a.id);
+};
+A.artLink = async () => {
+  const a = curArt(); const r = await askForm('연결 수정', artLinkFields(a), '저장', { wide: true }); if (!r) return;
+  Object.assign(a, r); touchArt(a); await put('articles', a); render();
+};
+function touchArt(a, note) {
+  a.updatedAt = nowISO();
+  if (a.status === 'approved' || a.status === 'exported') {
+    a.status = 'draft'; a.reapprove = true;
+    a.history.push({ at: nowISO(), status: 'draft', note: note || '승인 후 수정되어 다시 승인 필요' });
+    toast('승인된 글을 고쳐 초안으로 돌아갔습니다. 다시 승인이 필요합니다.', 'warn', 4000);
+  }
+}
+
+/* ---------- 프롬프트 ---------- */
+function storeKnowledge(s) {
+  const known = [], unknown = [], none = [];
+  INFO_FIELDS.forEach(([k, l]) => { const f = s.info[k]; if (f.status === '확인됨') known.push([l, f.value]); else if (f.status === '없음') none.push(l); else unknown.push(l); });
+  if (s.menu.status === '확인됨') known.push(['메뉴', s.menu.items.map(i => i.name).filter(Boolean).join(', ')]); else if (s.menu.status === '없음') none.push('메뉴'); else unknown.push('메뉴와 가격');
+  return { known, unknown, none };
+}
+function buildPrompt(a) {
+  const owner = S.settings.ownerName || '(운영 주체명)';
+  const L = [];
+  L.push(`당신은 ${owner}이(가) 직접 운영하는 공식 홈페이지에 올릴 안내 글을 쓰는 작성자입니다.`, '');
+  L.push('## 이 글이 답해야 할 질문');
+  a.queryIds.forEach(id => L.push(`- ${qText(id)}`));
+  L.push('첫 문단은 위 질문에 바로 답하는 2~3문장으로 시작하세요.', '');
+  L.push(`## 글 유형: ${a.type}`, TYPE_GUIDE[a.type] || '', '');
+  L.push('## 확인된 정보 (이 정보만 사용하세요)');
+  const stores = linkedStores(a);
+  if (!stores.length) L.push('- (연결된 매장 없음)');
+  stores.forEach(s => {
+    const k = storeKnowledge(s);
+    L.push(`### ${s.name}`, `- 브랜드: ${brandName(s.brandId) || '-'} / 지역: ${s.region || '-'} / 업종: ${s.category || '-'}`);
+    k.known.forEach(([l, v]) => L.push(`- ${l}: ${v}`));
+    if (k.none.length) L.push(`- 해당 없음(언급하지 말 것): ${k.none.join(', ')}`);
+  });
+  L.push('', '## 모르는 항목 (쓰지 말고, 필요하면 needs_check에 적으세요)');
+  const unk = stores.map(s => [s.name, storeKnowledge(s).unknown]).filter(x => x[1].length);
+  if (unk.length) unk.forEach(([n, l]) => L.push(`- ${n}: ${l.join(', ')}`)); else L.push('- 없음');
+  L.push('', '## 작성 규칙',
+    '1. 위 "확인된 정보"에 없는 메뉴·가격·혜택·이벤트·수상·방송 출연·후기·순위를 만들지 마세요.',
+    '2. 가격(○○원)과 영업시간 숫자는 본문에 쓰지 마세요. 공식 정보 블록에 자동으로 들어갑니다.',
+    '3. 방문 후기나 체험담처럼 쓰지 마세요. ("가 봤더니", "먹어 보니", "강추" 같은 표현 금지)',
+    `4. ${owner}이(가) 직접 작성한 공식 안내임을 본문에서 밝히세요. 제3자 추천처럼 보이게 쓰지 마세요.`,
+    `5. 근거가 필요한 표현(${S.settings.claimWords.join(', ')})은 쓰지 마세요.`,
+    '6. 연결된 매장이 아닌 같은 브랜드 다른 지점 이름, 다른 가게 이름은 쓰지 마세요.',
+    '7. 확실하지 않은 내용은 본문에서 빼고 needs_check에 적으세요.',
+    '8. 같은 문장을 반복하지 말고, 질문하는 사람이 바로 판단할 수 있게 구체적으로 쓰세요.', '');
+  L.push('## 출력 형식', '아래 JSON 형식으로만 답하세요. 설명이나 코드 블록 표시 없이 JSON만 출력하세요.',
+    JSON.stringify({ title: '제목 (40자 이내)', summary: '질문에 바로 답하는 요약 2~3문장', sections: [{ heading: '소제목', body: '본문 (문단은 빈 줄로 구분)' }], faq: [{ q: '질문', a: '답' }], meta_description: '검색 결과용 설명 (80~120자)', needs_check: ['확인이 필요한 내용'] }, null, 2));
+  return L.join('\n');
+}
+function parseArticleJson(raw) {
+  let t = String(raw || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
+  const s = t.indexOf('{'), e = t.lastIndexOf('}');
+  if (s < 0 || e <= s) throw new Error('JSON 객체({ … })를 찾지 못했습니다.');
+  let o; try { o = JSON.parse(t.slice(s, e + 1)); } catch (err) { throw new Error('JSON 형식이 올바르지 않습니다. (' + err.message + ')'); }
+  const str = v => typeof v === 'string' ? v.trim() : '';
+  if (!str(o.title)) throw new Error('"title"(제목)이 없습니다.');
+  if (!Array.isArray(o.sections) || !o.sections.length) throw new Error('"sections"(본문 섹션) 배열이 없습니다.');
+  const sections = o.sections.map(x => typeof x === 'string' ? { heading: '', body: x.trim() } : { heading: str(x?.heading), body: str(x?.body) }).filter(x => x.heading || x.body);
+  if (!sections.length) throw new Error('본문 섹션이 비어 있습니다.');
+  return {
+    title: str(o.title), summary: str(o.summary), sections,
+    faq: (Array.isArray(o.faq) ? o.faq : []).map(x => ({ q: str(x?.q ?? x?.question), a: str(x?.a ?? x?.answer) })).filter(x => x.q || x.a),
+    meta: str(o.meta_description ?? o.meta ?? o.description),
+    needCheck: (Array.isArray(o.needs_check) ? o.needs_check : []).map(x => typeof x === 'string' ? x.trim() : JSON.stringify(x)).filter(Boolean),
+  };
+}
+
+/* =========================================================
+   F-07 자동 검사
+   ========================================================= */
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const termRe = term => { const c = compact(term); return c ? new RegExp([...c].map(escRe).join('\\s*'), 'gi') : null; };
+function highlight(text, terms) {
+  const t = String(text || ''); const rs = [];
+  for (const term of terms || []) { const re = termRe(term); if (!re) continue; for (const m of t.matchAll(re)) if (m[0]) rs.push([m.index, m.index + m[0].length]); }
+  rs.sort((a, b) => a[0] - b[0]); let out = '', p = 0;
+  for (const [s, e] of rs) { if (s < p) continue; out += esc(t.slice(p, s)) + '<mark>' + esc(t.slice(s, e)) + '</mark>'; p = e; }
+  return out + esc(t.slice(p));
+}
+const artBody = a => a.sections.map(s => `${s.heading}\n${s.body}`).join('\n\n');
+const artAll = a => [a.title, a.summary, artBody(a), a.faq.map(f => `${f.q}\n${f.a}`).join('\n'), a.meta].join('\n');
+const PRICE_RE = /(\d{1,3}(?:,\d{3})+|\d+)\s*원/g;
+const MAN_RE = /(\d+(?:\.\d+)?)\s*만\s*(?:(\d)\s*천\s*)?원/g;
+const TIME_RE = /\d{1,2}\s*:\s*\d{2}|(?:오전|오후|새벽|밤|저녁)?\s*\d{1,2}\s*시(?!간|즌|리즈|식|청|장|대)(?:\s*\d{1,2}\s*분|\s*반)?/g;
+function pricesIn(t) {
+  const out = [];
+  for (const m of t.matchAll(MAN_RE)) out.push({ text: m[0], v: Math.round(Number(m[1]) * 10000 + (m[2] ? Number(m[2]) * 1000 : 0)) });
+  for (const m of t.matchAll(PRICE_RE)) if (!out.some(o => o.text.endsWith(m[0]))) out.push({ text: m[0], v: Number(m[1].replace(/,/g, '')) });
+  return out;
+}
+const sentencesOf = t => String(t || '').split(/[.!?。\n]+/).map(compact).filter(s => s.length >= 12);
+const gramCache = new Map();
+function grams(a) {
+  const key = a.id + '|' + a.updatedAt; const c = gramCache.get(a.id);
+  if (c && c.key === key) return c;
+  const body = compact(artBody(a)); const g = new Set(); for (let i = 0; i + 3 <= body.length; i++) g.add(body.slice(i, i + 3));
+  const v = { key, g, sent: new Set(sentencesOf(artBody(a))) }; gramCache.set(a.id, v); return v;
+}
+function articleChecks(a) {
+  const out = []; const err = (msg, terms = []) => out.push({ level: 'err', msg, terms }); const warn = (msg, terms = []) => out.push({ level: 'warn', msg, terms });
+  if (!a.queryIds.length) err('연결된 질의가 없습니다');
+  if (!a.title.trim()) err('제목이 비어 있습니다');
+  if (!a.sections.some(s => s.body.trim())) err('본문이 비어 있습니다');
+  if (!a.meta.trim()) err('메타 설명이 비어 있습니다');
+  const stores = linkedStores(a); const all = artAll(a); const call = compact(all);
+  if (!stores.length) warn('연결 매장이 없어 공식 정보 블록이 들어가지 않습니다');
+  // 같은 브랜드 다른 지점
+  const brandIds = new Set(stores.map(s => s.brandId).filter(Boolean));
+  const brandC = [...brandIds].map(id => compact(brandName(id)));
+  const linkedC = stores.flatMap(s => [s.name, ...s.aliases]).map(compact);
+  S.stores.filter(s => brandIds.has(s.brandId) && !a.storeIds.includes(s.id)).forEach(o => {
+    const hits = uniq([o.name, ...o.aliases]).filter(al => { const c = compact(al); return c.length >= 2 && !brandC.includes(c) && !linkedC.some(l => l.includes(c)) && call.includes(c); });
+    if (hits.length) err(`연결 매장이 아닌 같은 브랜드 지점 "${o.name}"이(가) 나옵니다`, hits);
+  });
+  // 금액
+  const valid = new Set(stores.filter(s => s.menu.status === '확인됨').flatMap(s => s.menu.items.map(i => i.price)).filter(p => p != null));
+  const prices = pricesIn(all);
+  const bad = prices.filter(p => !valid.has(p.v)), ok = prices.filter(p => valid.has(p.v));
+  if (bad.length) err(`확인된 메뉴 가격에 없는 금액: ${uniq(bad.map(p => p.text)).join(', ')}`, bad.map(p => p.text));
+  if (ok.length) warn(`본문에 금액을 직접 썼습니다 (정보 블록에 자동으로 들어갑니다): ${uniq(ok.map(p => p.text)).join(', ')}`, ok.map(p => p.text));
+  const times = uniq([...all.matchAll(TIME_RE)].map(m => m[0].trim()).filter(Boolean));
+  if (times.length) warn(`본문에 시간 숫자를 직접 썼습니다: ${times.join(', ')}`, times);
+  const claims = S.settings.claimWords.filter(w => w && call.includes(compact(w)));
+  if (claims.length) warn(`근거가 필요한 표현: ${claims.join(', ')}`, claims);
+  // 확인 필요 정보
+  stores.forEach(s => {
+    INFO_FIELDS.forEach(([k, l]) => { const f = s.info[k]; if (f.status === '확인 필요' && f.value && compact(f.value).length >= 3 && call.includes(compact(f.value))) warn(`"확인 필요" 정보를 참조합니다: ${s.name} ${l}`, [f.value]); });
+    if (s.menu.status !== '확인됨') { const n = s.menu.items.map(i => i.name).filter(x => x && compact(x).length >= 2 && call.includes(compact(x))); if (n.length) warn(`확인되지 않은 메뉴를 언급합니다 (${s.name}): ${n.join(', ')}`, n); }
+  });
+  if (a.needCheck.length) warn(`작성 AI가 남긴 확인 필요 항목 ${a.needCheck.length}개를 해결하세요`);
+  // 유사 글
+  const me = grams(a);
+  for (const o of S.articles) {
+    if (o.id === a.id) continue;
+    if (a.title.trim() && compact(o.title) === compact(a.title)) { warn(`기존 글과 제목이 같습니다: "${o.title}"`, [a.title]); continue; }
+    const g = grams(o);
+    let same = 0; me.sent.forEach(x => { if (g.sent.has(x)) same++; });
+    const sr = me.sent.size >= 3 ? same / me.sent.size : 0;
+    let inter = 0; if (me.g.size && g.g.size) me.g.forEach(x => { if (g.g.has(x)) inter++; });
+    const jac = me.g.size > 60 && g.g.size > 60 ? inter / (me.g.size + g.g.size - inter) : 0;
+    if (sr >= 0.3 || jac >= 0.5) warn(`기존 글 "${o.title || '(제목 없음)'}"과 지나치게 비슷합니다 (문장 겹침 ${Math.round(sr * 100)}%, 글자 유사도 ${Math.round(jac * 100)}%)`, [...me.sent].filter(x => g.sent.has(x)).slice(0, 20));
+  }
+  return out;
+}
+
+/* ---------- 글 편집 화면 ---------- */
+function vArticle(id) {
+  const a = byId('articles', id); if (!a) return notFound('글');
+  cur.article = id;
+  const stores = linkedStores(a);
+  const unk = stores.map(s => [s.name, storeKnowledge(s).unknown]).filter(x => x[1].length);
+  const sec = a.sections.map((s, i) => `<div class="sec"><div class="sec-head"><b>섹션 ${i + 1}</b><button class="btn ghost icon" data-act="secMove" data-i="${i}" data-d="-1" aria-label="위로" ${i ? '' : 'disabled'}>↑</button><button class="btn ghost icon" data-act="secMove" data-i="${i}" data-d="1" aria-label="아래로" ${i < a.sections.length - 1 ? '' : 'disabled'}>↓</button><button class="btn ghost icon" data-act="secDel" data-i="${i}" aria-label="섹션 삭제">✕</button></div>
+    <div class="field"><label for="sh_${i}">소제목</label><input type="text" id="sh_${i}" value="${esc(s.heading)}" data-ch="artSec" data-i="${i}" data-k="heading"></div>
+    <div class="field" style="margin:0"><label for="sb_${i}">본문</label><textarea id="sb_${i}" rows="6" data-ch="artSec" data-i="${i}" data-k="body">${esc(s.body)}</textarea></div></div>`).join('');
+  const faq = a.faq.map((f, i) => `<div class="sec"><div class="sec-head"><b>FAQ ${i + 1}</b><button class="btn ghost icon" data-act="faqDel" data-i="${i}" aria-label="FAQ 삭제">✕</button></div>
+    <div class="field"><label for="fq_${i}">질문</label><input type="text" id="fq_${i}" value="${esc(f.q)}" data-ch="artFaq" data-i="${i}" data-k="q"></div>
+    <div class="field" style="margin:0"><label for="fa_${i}">답</label><textarea id="fa_${i}" rows="3" data-ch="artFaq" data-i="${i}" data-k="a">${esc(f.a)}</textarea></div></div>`).join('');
+  return `${pageHead(a.title || '(제목 없음)', `${esc(a.type)} · ${artStBadge(a)}`, `<a class="btn" href="#articles">← 글 목록</a><button class="btn danger" data-act="artDel">글 삭제</button>`)}
+  <div class="art-layout"><div>
+    <div class="card"><div class="card-head"><h2><span class="step-num">1</span>질의·매장 연결</h2><button class="btn soft" data-act="artLink">연결 수정</button></div>
+      <p style="margin:0 0 6px"><b>질의</b> ${a.queryIds.map(id => `<span class="pill">${esc(qText(id) || '(삭제된 질의)')}</span>`).join('') || '<span class="muted">없음</span>'}</p>
+      <p style="margin:0"><b>매장</b> ${stores.map(s => `<a class="pill" href="#store/${s.id}">${esc(s.name)} · 확인 ${confirmCount(s).join('/')}</a>`).join('') || '<span class="muted">없음</span>'} · <b>유형</b> ${esc(a.type)}</p></div>
+    <div class="card"><div class="card-head"><h2><span class="step-num">2</span>프롬프트 복사</h2><button class="btn primary" data-act="artPrompt">${icon('copy', 18)} 프롬프트 만들기·복사</button></div>
+      <p class="hint" style="margin-top:-4px">"확인됨" 정보만 들어갑니다. Claude 등에 붙여넣고 받은 JSON을 3단계에 붙여넣으세요.</p>
+      ${unk.length ? `<div class="notice warn" style="margin:0"><div class="grow"><b>모르는 항목</b> (프롬프트에서 "쓰지 말 것"으로 알립니다)<ul>${unk.map(([n, l]) => `<li>${esc(n)}: ${l.map(esc).join(', ')}</li>`).join('')}</ul></div></div>` : ''}
+      <details style="margin-top:10px"><summary class="small muted" style="cursor:pointer;min-height:32px">프롬프트 미리 보기</summary><pre class="pre">${esc(buildPrompt(a))}</pre></details></div>
+    <div class="card"><div class="card-head"><h2><span class="step-num">3</span>결과 붙여넣기</h2><button class="btn primary" data-act="artParse">칸에 나눠 넣기</button></div>
+      <div class="field" style="margin:0"><label for="art_raw" class="sr">AI 결과</label><textarea id="art_raw" rows="5" data-ch="artRaw" placeholder="AI가 준 JSON 결과를 그대로 붙여넣으세요">${esc(a.rawPaste)}</textarea></div>
+      ${ui.parseErr ? `<div class="notice err" style="margin:10px 0 0"><div class="grow"><b>형식 오류:</b> ${esc(ui.parseErr)}<br><span class="small">붙여넣은 원문은 그대로 두었습니다.</span></div></div>` : ''}</div>
+    <div class="card"><h2>글 내용 <span class="hint">수정하면 자동 저장됩니다</span></h2>
+      <div class="field"><label for="art_title">제목 <span class="req">*</span></label><input type="text" id="art_title" value="${esc(a.title)}" data-ch="artF" data-k="title"></div>
+      <div class="field"><label for="art_sum">요약 (질문에 바로 답하는 첫 문단)</label><textarea id="art_sum" rows="3" data-ch="artF" data-k="summary">${esc(a.summary)}</textarea></div>
+      <h3>본문 섹션</h3>${sec || '<p class="muted">섹션이 없습니다.</p>'}<button class="btn soft" data-act="secAdd" style="margin-bottom:16px">+ 섹션 추가</button>
+      <h3>FAQ</h3>${faq || '<p class="muted">FAQ가 없습니다.</p>'}<button class="btn soft" data-act="faqAdd" style="margin-bottom:16px">+ FAQ 추가</button>
+      <div class="field"><label for="art_meta">메타 설명 <span class="req">*</span> <span class="hint">${a.meta.length}자 · 80~120자 권장</span></label><textarea id="art_meta" rows="2" data-ch="artF" data-k="meta">${esc(a.meta)}</textarea></div>
+      <div class="field"><label for="art_slug">주소(slug) <span class="hint">영문 소문자·숫자·하이픈. 공식 주소 뒤에 붙어 canonical·sitemap에 쓰입니다</span></label><input type="text" id="art_slug" value="${esc(a.slug)}" data-ch="artF" data-k="slug" placeholder="예: sindorim-hoesik-guide"></div>
+      ${a.needCheck.length ? `<div class="notice warn" style="margin:0"><div class="grow"><b>작성 AI가 남긴 확인 필요 항목</b> (내보내기에는 들어가지 않습니다)<ul class="list">${a.needCheck.map((n, i) => `<li><span class="grow">${esc(n)}</span><button class="btn ghost" data-act="ncDel" data-i="${i}">해결함</button></li>`).join('')}</ul></div></div>` : ''}
+    </div>
+  </div><aside class="art-side" id="art-side">${artSide(a)}</aside></div>`;
+}
+function artSide(a) {
+  const ch = articleChecks(a); const errs = ch.filter(c => c.level === 'err'); ui.lastChecks = ch;
+  const canExport = a.status === 'approved' || a.status === 'exported';
+  let actions = '';
+  if (a.status === 'draft') actions = `<button class="btn primary block" data-act="artReview" ${errs.length ? 'disabled' : ''}>검수 요청</button>`;
+  if (a.status === 'review') actions = `<button class="btn primary block" data-act="artApprove" ${errs.length ? 'disabled' : ''}>승인</button><button class="btn block" data-act="artReject" style="margin-top:8px">반려</button>`;
+  if (canExport) actions = `<p class="small" style="margin:0 0 8px">승인: <b>${esc(a.approver)}</b> · ${esc(fmtDT(a.approvedAt))}${a.exportedAt ? `<br>마지막 내보내기: ${esc(fmtDT(a.exportedAt))}` : ''}</p>`;
+  return `<div class="card"><div class="card-head"><h2>상태</h2>${artStBadge(a)}</div>
+    ${a.reapprove ? '<p class="small" style="margin:0 0 8px;color:var(--err)">승인 후 수정되어 다시 승인이 필요합니다.</p>' : ''}
+    ${actions}${errs.length && !canExport ? '<p class="hint" style="margin:8px 0 0">오류를 모두 고쳐야 검수 요청·승인할 수 있습니다.</p>' : ''}</div>
+  <div class="card"><div class="card-head"><h2>자동 검사</h2>${errs.length ? badge(`오류 ${errs.length}`, 'err') : badge('오류 0', 'ok')} ${ch.length - errs.length ? badge(`주의 ${ch.length - errs.length}`, 'warn') : ''}</div>
+    ${ch.length ? ch.map((c, i) => `<button class="check-item ${c.level}" data-act="hlShow" data-i="${i}"><span>${c.level === 'err' ? badge('오류', 'err') : badge('주의', 'warn')}</span><span>${esc(c.msg)}</span></button>`).join('') + '<p class="hint" style="margin:0">항목을 누르면 해당 부분을 강조해 보여 줍니다.</p>' : '<p class="muted" style="margin:0">문제가 발견되지 않았습니다. 사람이 한 번 더 읽어 주세요.</p>'}</div>
+  <div class="card"><h2>미리보기·내보내기</h2>
+    <button class="btn block" data-act="artPreview">미리보기 (휴대폰/PC)</button>
+    <div class="actions" style="margin-top:8px"><button class="btn primary" data-act="artDownload" ${canExport ? '' : 'disabled'} style="flex:1">HTML 내려받기</button><button class="btn" data-act="artSnippet" ${canExport ? '' : 'disabled'} style="flex:1">코드 조각</button></div>
+    <button class="btn block" data-act="artTistory" ${canExport ? '' : 'disabled'} style="margin-top:8px">티스토리 HTML</button>
+    ${canExport ? '' : '<p class="hint" style="margin:8px 0 0">승인된 글만 내보낼 수 있습니다.</p>'}
+    ${a.tistoryUrl || a.tistoryAt ? `<p class="small" style="margin:8px 0 0">티스토리 게시: ${safeUrl(a.tistoryUrl) ? `<a href="${esc(safeUrl(a.tistoryUrl))}" target="_blank" rel="noopener">${esc(a.tistoryUrl)}</a>` : '주소 미기록'}${a.tistoryAt ? ` · ${esc(a.tistoryAt)}` : ''}</p>` : ''}
+    <div class="field" style="margin:14px 0 0"><label for="art_pub">게시일 (홈페이지에 실제로 올린 날)</label><input type="date" id="art_pub" value="${esc(a.publishedAt)}" data-ch="artPub" ${canExport || a.publishedAt ? '' : 'disabled'}><small class="hint">리포트에서 측정일과의 간격 계산에 쓰입니다.</small></div></div>
+  <div class="card"><h2>기록</h2><ul class="timeline">${a.history.slice().reverse().map(h => `<li><b>${esc(ART_ST[h.status]?.[0] || h.status)}</b> · ${esc(fmtDT(h.at))}${h.by ? ` · ${esc(h.by)}` : ''}${h.note ? `<br><span class="muted">${esc(h.note)}</span>` : ''}</li>`).join('')}</ul></div>`;
+}
+function refreshSide() { const a = curArt(); const el = $('#art-side'); if (a && el) el.innerHTML = artSide(a); renderNav(route().name); }
+async function saveArt(a, rerender) { touchArt(a); await put('articles', a); if (rerender) render(); else refreshSide(); }
+CH.artF = async el => {
+  const a = curArt(); const k = el.dataset.k; let v = el.value.trim();
+  if (k === 'slug') { v = v.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_/.]/g, '').replace(/^\/+|\/+$/g, ''); el.value = v; }
+  if (a[k] === v) return; a[k] = v; await saveArt(a, k === 'title' || k === 'meta');
+};
+CH.artSec = async el => { const a = curArt(); const s = a.sections[+el.dataset.i]; const v = el.dataset.k === 'body' ? el.value.replace(/\s+$/, '') : el.value.trim(); if (s[el.dataset.k] === v) return; s[el.dataset.k] = v; await saveArt(a); };
+CH.artFaq = async el => { const a = curArt(); const f = a.faq[+el.dataset.i]; const v = el.value.trim(); if (f[el.dataset.k] === v) return; f[el.dataset.k] = v; await saveArt(a); };
+CH.artRaw = async el => { const a = curArt(); a.rawPaste = el.value; await put('articles', a); };
+CH.artPub = async el => { const a = curArt(); a.publishedAt = el.value; a.history.push({ at: nowISO(), status: a.status, note: el.value ? `게시일 ${el.value} 기록` : '게시일 지움' }); await put('articles', a); refreshSide(); };
+A.secAdd = async () => { const a = curArt(); a.sections.push({ heading: '', body: '' }); await saveArt(a, true); };
+A.secDel = async el => { const a = curArt(); if (!await ask('섹션 삭제', '이 섹션을 삭제할까요?', { ok: '삭제', danger: true })) return; a.sections.splice(+el.dataset.i, 1); await saveArt(a, true); };
+A.secMove = async el => { const a = curArt(); const i = +el.dataset.i, j = i + +el.dataset.d; if (j < 0 || j >= a.sections.length) return; [a.sections[i], a.sections[j]] = [a.sections[j], a.sections[i]]; await saveArt(a, true); };
+A.faqAdd = async () => { const a = curArt(); a.faq.push({ q: '', a: '' }); await saveArt(a, true); };
+A.faqDel = async el => { const a = curArt(); a.faq.splice(+el.dataset.i, 1); await saveArt(a, true); };
+A.ncDel = async el => { const a = curArt(); a.needCheck.splice(+el.dataset.i, 1); await put('articles', a); render(); };
+A.artPrompt = () => { const a = curArt(); copyText(buildPrompt(a), '프롬프트를 복사했습니다. AI에 붙여넣으세요.'); };
+A.artParse = async () => {
+  const a = curArt(); const raw = $('#art_raw').value; a.rawPaste = raw;
+  let p; try { p = parseArticleJson(raw); ui.parseErr = ''; } catch (e) { ui.parseErr = e.message; await put('articles', a); render(); return; }
+  const has = a.title || a.summary || a.sections.some(s => s.body) || a.faq.length || a.meta;
+  if (has && !await ask('내용 덮어쓰기', '이미 입력된 제목·본문·FAQ·메타 설명을 붙여넣은 결과로 바꿀까요?', { ok: '바꾸기' })) { await put('articles', a); render(); return; }
+  Object.assign(a, p); await saveArt(a, true); toast('칸에 나눠 넣었습니다. 검사 결과를 확인하세요.');
+};
+A.hlShow = el => {
+  const c = ui.lastChecks?.[+el.dataset.i]; const a = curArt(); if (!c || !a) return;
+  const blocks = [['제목', a.title], ['요약', a.summary], ...a.sections.map((s, i) => [`섹션 ${i + 1}${s.heading ? ' · ' + s.heading : ''}`, s.body]), ...a.faq.map((f, i) => [`FAQ ${i + 1}`, `Q. ${f.q}\nA. ${f.a}`]), ['메타 설명', a.meta]];
+  openModal(c.msg, `${c.terms.length ? '' : '<p class="hint">강조할 위치가 없는 항목입니다.</p>'}${blocks.map(([l, t]) => `<h3 style="margin-top:12px">${esc(l)}</h3><div class="hl-box">${highlight(t, c.terms) || '<span class="muted">(비어 있음)</span>'}</div>`).join('')}`, { wide: true });
+  setTimeout(() => { const m = $('#modal-root mark'); if (m) m.scrollIntoView({ block: 'center' }); }, 60);
+};
+A.artReview = async () => {
+  const a = curArt(); if (articleChecks(a).some(c => c.level === 'err')) { toast('오류를 먼저 고치세요', 'warn'); return; }
+  a.status = 'review'; a.history.push({ at: nowISO(), status: 'review', note: '검수 요청' }); a.updatedAt = nowISO(); await put('articles', a); render();
+};
+A.artApprove = async () => {
+  const a = curArt(); if (articleChecks(a).some(c => c.level === 'err')) { toast('오류를 먼저 고치세요', 'warn'); return; }
+  const warns = articleChecks(a).length;
+  const r = await askForm('글 승인', [{ id: 'by', label: '확인자 이름', required: true, value: ui.lastChecker, autofocus: true }], '승인', { intro: warns ? `<div class="notice warn"><div class="grow">주의 항목 ${warns}개가 남아 있습니다. 직접 확인했는지 다시 보세요.</div></div>` : '' });
+  if (!r) return; ui.lastChecker = r.by;
+  Object.assign(a, { status: 'approved', approver: r.by, approvedAt: nowISO(), reapprove: false, updatedAt: nowISO() });
+  a.history.push({ at: a.approvedAt, status: 'approved', by: r.by, note: warns ? `주의 ${warns}개 확인 후 승인` : '' });
+  await put('articles', a); render(); toast('승인했습니다');
+};
+A.artReject = async () => {
+  const a = curArt(); const r = await askForm('반려', [{ id: 'reason', label: '반려 사유', type: 'textarea', required: true, autofocus: true }, { id: 'by', label: '확인자 이름', value: ui.lastChecker }], '반려'); if (!r) return;
+  a.status = 'draft'; a.history.push({ at: nowISO(), status: 'draft', by: r.by, note: '반려: ' + r.reason }); a.updatedAt = nowISO(); await put('articles', a); render();
+};
+A.artDel = async () => { const a = curArt(); if (!await ask('글 삭제', `"${a.title || '(제목 없음)'}" 글을 삭제할까요?`, { ok: '삭제', danger: true })) return; await del('articles', a.id); go('articles'); };
+
+/* =========================================================
+   F-08 내보내기: 글 HTML · llms.txt · sitemap.xml
+   ========================================================= */
+const siteBase = () => (safeUrl(S.settings.siteUrl) || '').replace(/\/+$/, '');
+const pubArticles = () => S.articles.filter(a => a.status === 'approved' || a.status === 'exported');
+const artUrl = a => siteBase() && a.slug ? `${siteBase()}/${a.slug}` : '';
+const paras = t => String(t || '').split(/\n{2,}/).map(p => p.trim()).filter(Boolean).map(p => `<p>${esc(p).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</p>`).join('');
+const EXPORT_CSS = `.geo-article{max-width:760px;margin:0 auto;padding:24px 16px 48px;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;color:#1d2030;line-height:1.75;font-size:17px;word-break:keep-all;overflow-wrap:anywhere}
+.geo-article *{box-sizing:border-box}.geo-article h1{font-size:28px;line-height:1.35;margin:.2em 0 .5em}.geo-article h2{font-size:21px;margin:1.8em 0 .5em}.geo-article h3{font-size:18px;margin:1.2em 0 .3em}
+.geo-kicker{color:#5146e0;font-weight:700;font-size:14px;margin:0}.geo-lead{font-size:18px;color:#3a3f55;background:#f5f5fc;border-radius:12px;padding:14px 16px}
+.geo-info{border:1px solid #e3e5ef;border-radius:14px;padding:4px 18px 14px;margin-top:2em}.geo-info dl{display:grid;grid-template-columns:minmax(72px,auto) 1fr;gap:6px 14px;margin:0}.geo-info dt{color:#666b80;font-weight:700}.geo-info dd{margin:0;min-width:0}
+.geo-menu{width:100%;border-collapse:collapse;margin-top:10px}.geo-menu td{padding:6px 0;border-bottom:1px solid #eef0f5}.geo-menu td:last-child{text-align:right;white-space:nowrap;padding-left:12px}
+.geo-note,.geo-foot{color:#666b80;font-size:14px}.geo-foot{border-top:1px solid #e3e5ef;margin-top:2.5em;padding-top:12px}.geo-article a{color:#5146e0}`;
+function infoBlock(s) {
+  const f = k => s.info[k].status === '확인됨' ? s.info[k].value : '';
+  const rows = [['주소', f('address')], ['전화', f('phone')], ['영업시간', f('hours')], ['휴무', f('closed')], ['주차', f('parking')], ['단체석', f('groupSeats')]].filter(r => r[1]);
+  const menu = s.menu.status === '확인됨' ? s.menu.items.filter(i => i.name) : [];
+  const links = [['지도에서 보기', safeUrl(f('mapUrl'))], ['예약하기', safeUrl(f('reservationUrl'))], ['매장 공식 정보', safeUrl(s.pageUrl)]].filter(l => l[1]);
+  const dates = [...INFO_FIELDS.map(([k]) => s.info[k]).filter(x => x.status === '확인됨').map(x => x.checkedAt), s.menu.status === '확인됨' ? s.menu.checkedAt : ''].filter(Boolean).sort();
+  return { rows, menu, links, last: dates[dates.length - 1] || '' };
+}
+function articleParts(a) {
+  const owner = S.settings.ownerName || ''; const url = artUrl(a); const stores = linkedStores(a);
+  const pubDate = fmtDate(a.publishedAt || a.approvedAt || a.createdAt);
+  const blocks = stores.map(s => ({ s, ...infoBlock(s) }));
+  const lastChecked = blocks.map(b => b.last).filter(Boolean).sort().pop() || '';
+  const body = `<article class="geo-article">
+<header><p class="geo-kicker">${esc(owner || '공식')} 공식 안내</p><h1>${esc(a.title)}</h1>${a.summary ? `<p class="geo-lead">${esc(a.summary)}</p>` : ''}</header>
+${a.sections.map(s => `<section>${s.heading ? `<h2>${esc(s.heading)}</h2>` : ''}${paras(s.body)}</section>`).join('\n')}
+${blocks.map(b => `<section class="geo-info"><h2>${esc(b.s.name)} 공식 정보</h2>${b.rows.length ? `<dl>${b.rows.map(([l, v]) => `<dt>${l}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : ''}${b.menu.length ? `<h3>메뉴</h3><table class="geo-menu"><tbody>${b.menu.map(i => `<tr><td>${esc(i.name)}</td><td>${i.price != null ? esc(won(i.price)) : ''}</td></tr>`).join('')}</tbody></table>` : ''}${b.links.length ? `<p>${b.links.map(([l, u]) => `<a href="${esc(u)}" rel="noopener">${l}</a>`).join(' · ')}</p>` : ''}${b.last ? `<p class="geo-note">정보 확인일: ${esc(b.last)}</p>` : ''}</section>`).join('\n')}
+${a.faq.length ? `<section class="geo-faq"><h2>자주 묻는 질문</h2>${a.faq.map(f => `<h3>${esc(f.q)}</h3>${paras(f.a)}`).join('')}</section>` : ''}
+<footer class="geo-foot"><p>공식 작성: ${esc(owner || '(운영 주체명 미설정)')} · 작성일 ${esc(pubDate)}${lastChecked ? ` · 정보 최종 확인일 ${esc(lastChecked)}` : ''}</p></footer>
+</article>`;
+  const org = owner ? { '@type': 'Organization', name: owner, ...(siteBase() ? { url: siteBase() } : {}) } : undefined;
+  const ld = [{ '@context': 'https://schema.org', '@type': 'Article', headline: a.title, description: a.meta || a.summary, inLanguage: 'ko-KR', datePublished: pubDate, dateModified: fmtDate(a.updatedAt), ...(org ? { author: org, publisher: org } : {}), ...(url ? { url, mainEntityOfPage: url } : {}), ...(stores.length ? { about: stores.map(s => ({ '@type': 'Restaurant', name: s.name })) } : {}) }, ...stores.map(restaurantLd)];
+  const ldScript = `<script type="application/ld+json">${JSON.stringify(ld.length === 1 ? ld[0] : ld, null, 2).replace(/</g, '\\u003c')}<\/script>`;
+  const head = `<title>${esc(a.title)}${owner ? ` | ${esc(owner)}` : ''}</title>
+<meta name="description" content="${esc(a.meta)}">${url ? `\n<link rel="canonical" href="${esc(url)}">` : ''}
+<meta property="og:type" content="article">
+<meta property="og:title" content="${esc(a.title)}">
+<meta property="og:description" content="${esc(a.meta)}">
+<meta property="og:locale" content="ko_KR">${url ? `\n<meta property="og:url" content="${esc(url)}">` : ''}${owner ? `\n<meta property="og:site_name" content="${esc(owner)}">` : ''}`;
+  return { head, body, ldScript };
+}
+function restaurantLd(s) {
+  const f = k => s.info[k].status === '확인됨' ? s.info[k].value : '';
+  const o = { '@context': 'https://schema.org', '@type': 'Restaurant', name: s.name };
+  if (f('address')) o.address = f('address');
+  if (f('phone')) o.telephone = f('phone');
+  if (s.category) o.servesCuisine = s.category;
+  if (safeUrl(f('mapUrl'))) o.hasMap = safeUrl(f('mapUrl'));
+  if (safeUrl(f('reservationUrl'))) o.acceptsReservations = safeUrl(f('reservationUrl'));
+  if (safeUrl(s.pageUrl)) o.url = safeUrl(s.pageUrl);
+  if (s.menu.status === '확인됨') { const items = s.menu.items.filter(i => i.name); if (items.length) o.hasMenu = { '@type': 'Menu', hasMenuSection: { '@type': 'MenuSection', name: '메뉴', hasMenuItem: items.map(i => ({ '@type': 'MenuItem', name: i.name, ...(i.price != null ? { offers: { '@type': 'Offer', price: String(i.price), priceCurrency: 'KRW' } } : {}) })) } }; }
+  return o;
+}
+function buildArticleHtml(a) {
+  const p = articleParts(a);
+  return `<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+${p.head}
+<style>body{margin:0;background:#fff}${EXPORT_CSS}</style>
+${p.ldScript}
+</head>
+<body>
+${p.body}
+</body>
+</html>
+`;
+}
+async function markExported(a, note = '내보내기') {
+  a.exportedAt = nowISO();
+  if (a.status === 'approved') a.status = 'exported';
+  a.history.push({ at: a.exportedAt, status: 'exported', note });
+  await put('articles', a);
+}
+const canExport = a => a.status === 'approved' || a.status === 'exported';
+A.artDownload = async () => {
+  const a = curArt(); if (!canExport(a)) { toast('승인된 글만 내보낼 수 있습니다', 'warn'); return; }
+  download(`${safeFile(a.slug.replace(/\//g, '-') || a.title)}.html`, buildArticleHtml(a), 'text/html');
+  await markExported(a); render(); toast('HTML 파일을 내려받았습니다');
+};
+A.artSnippet = () => {
+  const a = curArt(); if (!canExport(a)) { toast('승인된 글만 내보낼 수 있습니다', 'warn'); return; }
+  const p = articleParts(a);
+  const bodySnip = `<style>${EXPORT_CSS}</style>\n${p.body}\n${p.ldScript}`;
+  ui.snip = { head: p.head, body: bodySnip };
+  openModal('코드 조각', `<p class="hint">기존 페이지에 붙일 때 사용합니다. head 태그는 페이지의 &lt;head&gt; 안에, 본문 조각은 본문 자리에 넣으세요.</p>
+    <div class="field"><label for="snip_head">head 태그</label><textarea id="snip_head" rows="6" readonly class="mono">${esc(p.head)}</textarea></div><button class="btn" data-act="snipCopy" data-k="head">${icon('copy', 18)} head 태그 복사</button>
+    <div class="field" style="margin-top:16px"><label for="snip_body">본문 조각 (스타일·JSON-LD 포함)</label><textarea id="snip_body" rows="10" readonly class="mono">${esc(bodySnip)}</textarea></div><button class="btn primary" data-act="snipCopy" data-k="body">${icon('copy', 18)} 본문 조각 복사</button>`, { wide: true });
+};
+A.snipCopy = async el => { const a = curArt(); await copyText(ui.snip[el.dataset.k], '복사했습니다'); await markExported(a); refreshSide(); };
+A.artPreview = () => {
+  const a = curArt(); const html = buildArticleHtml(a);
+  openModal('미리보기', `<div class="chips" style="margin-bottom:12px"><button class="chip ${ui.preview === 'mobile' ? 'on' : ''}" data-act="pvMode" data-v="mobile">휴대폰</button><button class="chip ${ui.preview === 'pc' ? 'on' : ''}" data-act="pvMode" data-v="pc">PC</button>${canExport(a) ? '' : badge('승인 전 미리보기', 'warn')}</div>
+    <iframe class="preview-frame ${ui.preview === 'mobile' ? 'mobile' : ''}" sandbox="" title="글 미리보기" srcdoc="${esc(html)}"></iframe>`, { wide: true });
+};
+A.pvMode = el => { ui.preview = el.dataset.v; A.artPreview(); };
+
+/* ---------- 티스토리 HTML (HTML 모드에 붙여넣기용) ----------
+   티스토리 Open API가 종료되어 자동 발행 대신 복사·붙여넣기용 코드를 만든다.
+   스킨에 따라 <style> 블록이 지워질 수 있어 인라인 스타일만 쓴다. */
+const TS = { p: 'margin:0 0 1em;line-height:1.8', h2: 'margin:1.8em 0 .6em;font-size:1.3em', h3: 'margin:1.2em 0 .4em;font-size:1.1em', lead: 'background:#f5f5fc;border-radius:10px;padding:14px 16px;margin:0 0 1.4em;line-height:1.8', box: 'border:1px solid #e3e5ef;border-radius:12px;padding:4px 16px 12px;margin:1.6em 0', th: 'text-align:left;padding:6px 12px 6px 0;color:#666b80;white-space:nowrap;vertical-align:top;font-weight:700', td: 'padding:6px 0', note: 'color:#666b80;font-size:.9em' };
+const tsParas = t => String(t || '').split(/\n{2,}/).map(p => p.trim()).filter(Boolean).map(p => `<p style="${TS.p}">${esc(p).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</p>`);
+function buildTistoryHtml(a, mode) {
+  const owner = S.settings.ownerName || ''; const url = artUrl(a); const short = mode === 'summary' && !!url;
+  const blocks = linkedStores(a).map(s => ({ s, ...infoBlock(s) }));
+  const last = blocks.map(b => b.last).filter(Boolean).sort().pop() || '';
+  const out = [`<p style="${TS.note}">${esc(owner || '공식')} 공식 안내</p>`];
+  if (a.summary) out.push(`<p style="${TS.lead}">${esc(a.summary)}</p>`);
+  a.sections.forEach(s => { if (s.heading) out.push(`<h2 style="${TS.h2}">${esc(s.heading)}</h2>`); const ps = tsParas(s.body); out.push(...(short ? ps.slice(0, 1) : ps)); });
+  if (short) out.push(`<p style="${TS.p}"><a href="${esc(url)}">공식 안내 전체 보기 →</a></p>`);
+  blocks.forEach(b => {
+    const rows = b.rows.map(([l, v]) => `<tr><th style="${TS.th}">${l}</th><td style="${TS.td}">${esc(v)}</td></tr>`).join('');
+    const menu = b.menu.map(i => `<tr><th style="${TS.th}">${esc(i.name)}</th><td style="${TS.td}">${i.price != null ? esc(won(i.price)) : ''}</td></tr>`).join('');
+    out.push(`<div style="${TS.box}"><h3 style="${TS.h3}">${esc(b.s.name)} 공식 정보</h3>${rows ? `<table style="border-collapse:collapse;width:100%"><tbody>${rows}</tbody></table>` : ''}${menu ? `<h3 style="${TS.h3}">메뉴</h3><table style="border-collapse:collapse;width:100%"><tbody>${menu}</tbody></table>` : ''}${b.links.length ? `<p style="${TS.p}">${b.links.map(([l, u]) => `<a href="${esc(u)}">${l}</a>`).join(' · ')}</p>` : ''}</div>`);
+  });
+  if (a.faq.length) { out.push(`<h2 style="${TS.h2}">자주 묻는 질문</h2>`); a.faq.forEach(f => out.push(`<h3 style="${TS.h3}">Q. ${esc(f.q)}</h3>`, ...tsParas(f.a))); }
+  out.push(`<p style="${TS.note}">공식 작성: ${esc(owner || '(운영 주체명 미설정)')} · 작성일 ${esc(fmtDate(a.publishedAt || a.approvedAt || a.createdAt))}${last ? ` · 정보 확인일 ${esc(last)}` : ''}${url ? ` · <a href="${esc(url)}">공식 안내 페이지</a>` : ''}</p>`);
+  return out.join('\n');
+}
+function tistoryTags(a) {
+  const t = [];
+  a.queryIds.forEach(id => {
+    const q = byId('queries', id) || S.rounds.map(r => roundQ(r, id)).find(Boolean); if (!q?.region) return;
+    if (q.theme) t.push(q.region + q.theme);
+    if (q.category) t.push(q.region + q.category);
+    t.push(q.region + '맛집');
+  });
+  linkedStores(a).forEach(s => { t.push(s.name); if (brandName(s.brandId)) t.push(brandName(s.brandId)); });
+  return uniq(t.map(x => x.replace(/\s+/g, ''))).slice(0, 10);
+}
+A.artTistory = () => {
+  const a = curArt(); if (!canExport(a)) { toast('승인된 글만 내보낼 수 있습니다', 'warn'); return; }
+  const url = artUrl(a);
+  if (!ui.tsMode || (ui.tsMode === 'summary' && !url)) ui.tsMode = url ? 'summary' : 'full';
+  ui.ts = { title: a.title, html: buildTistoryHtml(a, ui.tsMode), tags: tistoryTags(a).join(', '), ld: articleParts(a).ldScript };
+  const copyBtn = (k, l, cls = '') => `<button class="btn ${cls}" data-act="tsCopy" data-k="${k}">${icon('copy', 18)} ${l}</button>`;
+  openModal('티스토리 HTML', `<div class="chips" style="margin-bottom:8px"><button class="chip ${ui.tsMode === 'full' ? 'on' : ''}" data-act="tsMode" data-v="full">전체 글</button><button class="chip ${ui.tsMode === 'summary' ? 'on' : ''}" data-act="tsMode" data-v="summary" ${url ? '' : 'disabled'}>요약 + 공식 링크</button></div>
+    <p class="hint" style="margin-top:0">${url ? '공식 홈페이지에도 같은 글을 올린다면 "요약 + 공식 링크"를 권장합니다. 같은 글이 두 곳에 그대로 있으면 중복 콘텐츠로 보일 수 있습니다.' : '설정의 공식 홈페이지 주소와 글 주소(slug)를 정하면 "요약 + 공식 링크" 방식을 쓸 수 있습니다.'}</p>
+    <ol class="small" style="padding-left:20px;margin:0 0 14px"><li>티스토리 글쓰기 → 오른쪽 위 <b>기본모드</b>를 <b>HTML</b>로 바꿉니다.</li><li>제목·본문 HTML·태그를 각각 붙여넣고 발행합니다.</li><li>발행한 글 주소를 아래에 기록합니다. (AI 인용 측정에서 "티스토리" 출처로 잡힙니다)</li></ol>
+    <div class="field"><label for="ts_title">제목</label><input type="text" id="ts_title" value="${esc(ui.ts.title)}" readonly></div>${copyBtn('title', '제목 복사')}
+    <div class="field" style="margin-top:14px"><label for="ts_html">본문 HTML</label><textarea id="ts_html" rows="10" readonly class="mono">${esc(ui.ts.html)}</textarea></div>${copyBtn('html', '본문 HTML 복사', 'primary')}
+    <div class="field" style="margin-top:14px"><label for="ts_tags">태그 (쉼표로 구분)</label><input type="text" id="ts_tags" value="${esc(ui.ts.tags)}" readonly></div>${copyBtn('tags', '태그 복사')}
+    <details style="margin-top:14px"><summary class="small muted" style="cursor:pointer;min-height:32px">구조화 데이터 JSON-LD (선택)</summary><p class="hint">티스토리가 글 안의 스크립트를 지우는지는 스킨·설정에 따라 다를 수 있어 본문과 따로 둡니다. 넣었다면 발행 후 글 소스에 남아 있는지 확인하세요.</p><textarea rows="6" readonly class="mono" aria-label="JSON-LD">${esc(ui.ts.ld)}</textarea>${copyBtn('ld', 'JSON-LD 복사')}</details>
+    <hr><div class="frow"><div class="field"><label for="ts_url">티스토리 글 주소</label><input type="url" id="ts_url" value="${esc(a.tistoryUrl || '')}" placeholder="https://○○○.tistory.com/12"></div><div class="field"><label for="ts_at">티스토리 게시일</label><input type="date" id="ts_at" value="${esc(a.tistoryAt || '')}"></div><button class="btn" data-act="tsSave">게시 기록 저장</button></div>`, { wide: true });
+};
+A.tsMode = el => { ui.tsMode = el.dataset.v; A.artTistory(); };
+A.tsCopy = async el => {
+  const a = curArt(); await copyText(ui.ts[el.dataset.k], '복사했습니다');
+  if (el.dataset.k === 'html') { await markExported(a, `티스토리용 HTML 복사 (${ui.tsMode === 'summary' ? '요약 + 공식 링크' : '전체 글'})`); refreshSide(); }
+};
+A.tsSave = async () => {
+  const a = curArt(); const u = $('#ts_url').value.trim();
+  if (u && !safeUrl(u)) { toast('주소는 http:// 또는 https://로 시작해야 합니다', 'warn'); return; }
+  a.tistoryUrl = u; a.tistoryAt = $('#ts_at').value;
+  a.history.push({ at: nowISO(), status: a.status, note: `티스토리 게시 기록${u ? ': ' + u : ''}` });
+  await put('articles', a); closeModal(); refreshSide(); toast('티스토리 게시 기록을 저장했습니다');
+};
+function buildLlms() {
+  const s = S.settings; const L = [];
+  L.push(`# ${s.ownerName || '(운영 주체명)'}`, '');
+  L.push(`> ${(s.ownerIntro || `${s.ownerName || '운영 주체'}가 직접 운영하는 매장의 공식 안내입니다.`).replace(/\s*\n\s*/g, ' ')}`, '');
+  if (siteBase()) L.push(`공식 홈페이지: ${siteBase()}`, '');
+  L.push('## 매장', '');
+  const stores = [...S.stores].sort((a, b) => brandName(a.brandId).localeCompare(brandName(b.brandId), 'ko') || a.name.localeCompare(b.name, 'ko'));
+  stores.forEach(st => { const u = safeUrl(st.pageUrl); const addr = st.info.address.status === '확인됨' ? st.info.address.value : ''; const desc = [brandName(st.brandId), st.region, st.category, addr].filter(Boolean).join(' · '); L.push(`- ${u ? `[${st.name}](${u})` : st.name}${desc ? `: ${desc}` : ''}`); });
+  L.push('', '## 공식 안내 글', '');
+  const arts = pubArticles();
+  if (!arts.length) L.push('- (아직 없음)');
+  arts.forEach(a => { const u = artUrl(a); const sum = (a.summary || a.meta).replace(/\s+/g, ' ').slice(0, 140); L.push(`- ${u ? `[${a.title}](${u})` : a.title}${sum ? `: ${sum}` : ''}`); });
+  return L.join('\n') + '\n';
+}
+const xmlEsc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]));
+function buildSitemap() {
+  const items = pubArticles().filter(a => a.slug).map(a => `  <url>\n    <loc>${xmlEsc(encodeURI(artUrl(a)))}</loc>\n    <lastmod>${fmtDate(a.publishedAt || a.approvedAt || a.updatedAt)}</lastmod>\n  </url>`);
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items.join('\n')}${items.length ? '\n' : ''}</urlset>\n`;
+}
+const sitemapBlock = () => !siteBase() ? '설정에서 공식 홈페이지 주소를 먼저 입력하세요.' : !pubArticles().some(a => a.slug) ? '주소(slug)가 정해진 승인 글이 없습니다.' : '';
+A.dlLlms = () => { if (!S.settings.ownerName) toast('운영 주체명이 비어 있습니다. 설정에서 입력하세요.', 'warn', 3500); download('llms.txt', buildLlms(), 'text/plain'); };
+A.dlSitemap = () => { const why = sitemapBlock(); if (why) { toast(why, 'warn', 3500); return; } download('sitemap.xml', buildSitemap(), 'application/xml'); };
+
+
+/* =========================================================
+   F-09 외부 출처 체크리스트
+   ========================================================= */
+const SRC_ST = ['미확인', '미등록', '등록됨·정보 불일치', '정상'];
+const SRC_KIND = { '미확인': '', '미등록': 'err', '등록됨·정보 불일치': 'warn', '정상': 'ok' };
+const MATCH_ITEMS = ['주소', '전화', '영업시간', '메뉴'];
+const scId = (sid, cid) => `${sid}|${cid}`;
+function citeCounts() { const r = latestRound(); return r ? roundStats(r).src : {}; }
+function checkSourcesSorted() {
+  const cc = citeCounts();
+  return S.settings.checkSources.map((c, i) => ({ ...c, cite: c.dictName ? (cc[c.dictName]?.n || 0) : 0, i })).sort((a, b) => b.cite - a.cite || a.i - b.i);
+}
+function sourceTodos() {
+  const out = [];
+  for (const c of S.sourceChecks) {
+    const st = byId('stores', c.storeId); const src = S.settings.checkSources.find(x => x.id === c.sourceId);
+    if (!st || !src) continue;
+    const why = [];
+    if (c.status === '미등록') why.push('미등록');
+    if (c.status === '등록됨·정보 불일치') why.push('정보 불일치');
+    if (c.replyNeeded) why.push('답글 필요');
+    if (why.length) out.push({ c, st, src, why });
+  }
+  return out;
+}
+function vSources() {
+  const srcs = checkSourcesSorted(); const stores = [...S.stores].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+  const lr = latestRound(); const todos = sourceTodos();
+  const cell = (st, src) => {
+    const c = byId('sourceChecks', scId(st.id, src.id));
+    const s = c?.status || '미확인';
+    return `<button class="scell" data-act="scOpen" data-s="${st.id}" data-c="${src.id}" aria-label="${esc(src.name)} · ${esc(st.name)} · ${s}"><span>${badge(s, SRC_KIND[s])}</span>${c ? `<span class="small muted">${[c.reviews !== '' && c.reviews != null ? `리뷰 ${esc(c.reviews)}` : '', c.rating ? `★${esc(c.rating)}` : '', c.lastChecked ? esc(c.lastChecked) : ''].filter(Boolean).join(' · ')}</span>${c.replyNeeded ? badge('답글 필요', 'warn') : ''}` : ''}</button>`;
+  };
+  const rows = srcs.map(src => `<tr><td class="mc" data-label="출처"><b>${esc(src.name)}</b><div class="qmeta">${src.cite ? badge(`AI 인용 ${src.cite}회`, 'pri') : `<span class="small muted">${src.dictName ? 'AI 인용 0회' : '출처 사전 연결 없음'}</span>`}</div></td>${stores.map(st => `<td data-label="${esc(st.name)}">${cell(st, src)}</td>`).join('')}</tr>`).join('');
+  const listed = new Set(S.settings.checkSources.map(c => c.dictName).filter(Boolean));
+  const extra = lr ? roundStats(lr).srcRank.filter(s => !listed.has(s.name)).slice(0, 8) : [];
+  return `${pageHead('외부 출처 체크리스트', `AI가 인용하는 출처에서 우리 매장 정보가 맞는지 관리합니다.${lr ? ` 인용 횟수 기준: ${esc(lr.name)}` : ''}`, `<button class="btn" data-act="go" data-to="settings">출처 항목 관리</button>`)}
+  <div class="notice info"><div class="grow">리뷰 관련 기능은 <b>실제 손님 리뷰의 수·평점 기록과 답글 필요 표시</b>까지만 둡니다. 대리 리뷰 작성·리뷰 대가 이벤트는 다루지 않습니다.</div></div>
+  <div class="card"><div class="card-head"><h2>할 일 ${badge(todos.length, todos.length ? 'warn' : 'ok')}</h2></div>
+    ${todos.length ? `<ul class="list">${todos.map(t => `<li><div class="grow"><b>${esc(t.st.name)}</b> · ${esc(t.src.name)}<div class="qmeta">${t.why.map(w => esc(w)).join(' · ')}${t.c.memo ? ' · ' + esc(t.c.memo) : ''}</div></div><button class="btn soft" data-act="scOpen" data-s="${t.st.id}" data-c="${t.src.id}">열기</button></li>`).join('')}</ul>` : '<p class="muted" style="margin:0">미등록·정보 불일치·답글 필요 칸이 없습니다.</p>'}</div>
+  <div class="card"><div class="card-head"><h2>출처 × 매장</h2><span class="hint">AI 인용이 많은 출처가 위로 옵니다. 칸을 눌러 기록하세요.</span></div>
+    ${stores.length && srcs.length ? `<div class="table-wrap"><table class="t stack"><thead><tr><th>출처</th>${stores.map(st => `<th>${esc(st.name)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty">매장과 출처 항목이 있어야 합니다.</div>'}</div>
+  ${extra.length ? `<div class="card"><h2>체크리스트에 없는 인용 출처</h2><p class="hint" style="margin-top:-6px">최근 회차에서 AI가 인용했지만 체크리스트 항목이 없는 출처입니다.</p><ul class="list">${extra.map(s => `<li><span class="grow"><b>${esc(s.name)}</b> <span class="muted small">인용 ${s.n}회</span></span><button class="btn soft" data-act="csAddFrom" data-v="${esc(s.name)}">체크리스트에 추가</button></li>`).join('')}</ul></div>` : ''}`;
+}
+A.scOpen = async el => {
+  const st = byId('stores', el.dataset.s); const src = S.settings.checkSources.find(x => x.id === el.dataset.c); if (!st || !src) return;
+  const id = scId(st.id, src.id); const c = byId('sourceChecks', id) || {};
+  const known = INFO_FIELDS.filter(([k]) => ['address', 'phone', 'hours'].includes(k)).map(([k, l]) => `<li>${l}: ${st.info[k].status === '확인됨' ? esc(st.info[k].value) : `<span class="muted">${esc(st.info[k].status)}</span>`}</li>`).join('') + `<li>메뉴: ${st.menu.status === '확인됨' ? esc(st.menu.items.map(i => i.name + (i.price != null ? ' ' + won(i.price) : '')).join(', ')) : `<span class="muted">${esc(st.menu.status)}</span>`}</li>`;
+  const r = await askForm(`${st.name} · ${src.name}`, [
+    { id: 'status', label: '상태', type: 'select', options: SRC_ST, value: c.status || '미확인' },
+    { id: 'url', label: '매장 페이지 링크', type: 'url', value: c.url || '', placeholder: 'https://...' },
+    { id: 'lastChecked', label: '마지막 확인일', type: 'date', value: c.lastChecked || today() },
+    { id: 'reviews', label: '리뷰 수 (직접 입력)', type: 'number', value: c.reviews ?? '' },
+    { id: 'rating', label: '평점 (직접 입력)', type: 'number', value: c.rating ?? '' },
+    { id: 'match', label: '공식 정보와 일치하는 항목', type: 'checks', options: MATCH_ITEMS, value: c.match || [] },
+    { id: 'replyNeeded', label: '답글', type: 'checkbox', text: '실제 손님 리뷰에 답글이 필요함', value: !!c.replyNeeded },
+    { id: 'memo', label: '메모', type: 'textarea', rows: 2, value: c.memo || '' },
+  ], '저장', { intro: `<div class="notice info"><div class="grow"><b>공식 정보 (F-01)</b><ul>${known}</ul></div></div>`, validate: o => o.url && !safeUrl(o.url) ? '링크는 http:// 또는 https://로 시작해야 합니다.' : '' });
+  if (!r) return;
+  await put('sourceChecks', { id, storeId: st.id, sourceId: src.id, ...r }); render();
+};
+A.csAddFrom = async el => { const v = el.dataset.v; S.settings.checkSources.push({ id: uid('cs_'), name: v, dictName: v }); await saveSettings(); render(); };
+
+/* =========================================================
+   F-10 월간 리포트
+   ========================================================= */
+const deltaTxt = (a, b) => { if (a == null || b == null) return '<span class="muted">—</span>'; const d = Math.round((b - a) * 10) / 10; return d > 0 ? `<span class="delta up">▲ ${d}%p</span>` : d < 0 ? `<span class="delta down">▼ ${-d}%p</span>` : '<span class="muted">변화 없음</span>'; };
+function reportData(A0, B0) {
+  let RA = A0, RB = B0;
+  if ((RA.date || '') > (RB.date || '')) [RA, RB] = [RB, RA];
+  const sa = roundStats(RA), sb = roundStats(RB);
+  const qa = new Map(sa.queries.map(x => [x.q.id, x]));
+  const newly = sb.queries.filter(x => x.ex > 0 && qa.get(x.q.id) && qa.get(x.q.id).got > 0 && qa.get(x.q.id).ex === 0);
+  const dropped = sb.queries.filter(x => x.got > 0 && x.ex === 0 && qa.get(x.q.id)?.ex > 0);
+  const added = sb.queries.filter(x => !qa.has(x.q.id)).length;
+  const grp = k => uniq([...Object.keys(sa[k]), ...Object.keys(sb[k])]).map(key => { const ga = sa[k][key], gb = sb[k][key]; return { key, a: ga && ga.n ? pct(ga.e, ga.n) : null, b: gb && gb.n ? pct(gb.e, gb.n) : null, an: ga ? `${ga.e}/${ga.n}` : '—', bn: gb ? `${gb.e}/${gb.n}` : '—' }; });
+  const rankA = new Map(sa.srcRank.map((s, i) => [s.name, i + 1]));
+  const src = sb.srcRank.slice(0, 10).map((s, i) => ({ ...s, rank: i + 1, prev: rankA.get(s.name) || null, prevN: sa.src[s.name]?.n || 0 }));
+  const inPeriod = d => d && d > RA.date && d <= RB.date;
+  const arts = S.articles.filter(a => inPeriod(a.publishedAt)).sort((a, b) => a.publishedAt.localeCompare(b.publishedAt)).map(a => ({ a, gap: daysBetween(a.publishedAt, RB.date) }));
+  const earlier = S.articles.filter(a => a.publishedAt && a.publishedAt <= RA.date).length;
+  const checks = S.sourceChecks.filter(c => inPeriod(c.lastChecked) && byId('stores', c.storeId));
+  const chCount = SRC_ST.map(s => [s, checks.filter(c => c.status === s).length]).filter(x => x[1]);
+  return { RA, RB, sa, sb, newly, dropped, added, ai: grp('byAI'), region: grp('byRegion'), theme: grp('byTheme'), src, arts, earlier, chCount, checksN: checks.length, empty: sb.queries.filter(x => x.kind === 'empty'), pending: sb.queries.filter(x => x.kind === 'pending').length, todos: sourceTodos() };
+}
+function reportBody(d) {
+  const { RA, RB, sa, sb } = d;
+  const gTable = (title, rows) => `<div class="card"><h2>${title}</h2><div class="table-wrap"><table class="t stack"><thead><tr><th>구분</th><th class="num">${esc(RA.name)}</th><th class="num">${esc(RB.name)}</th><th>변화</th></tr></thead><tbody>${rows.map(r => `<tr><td data-label="구분"><b>${esc(r.key)}</b></td><td data-label="${esc(RA.name)}" class="num">${r.a == null ? '—' : r.a + '%'} <span class="muted small">(${r.an})</span></td><td data-label="${esc(RB.name)}" class="num">${r.b == null ? '—' : r.b + '%'} <span class="muted small">(${r.bn})</span></td><td data-label="변화">${deltaTxt(r.a, r.b)}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">데이터 없음</td></tr>'}</tbody></table></div></div>`;
+  const qList = (l, empty) => l.length ? `<ul class="list">${l.map(x => `<li><span class="grow">${esc(x.q.text)}</span><span class="small muted">${[x.q.region, x.q.theme].filter(Boolean).map(esc).join(' · ')}</span></li>`).join('')}</ul>` : `<p class="muted" style="margin:0">${empty}</p>`;
+  const ea = pct(sa.e, sa.n), eb = pct(sb.e, sb.n);
+  return `<div class="notice info"><div class="grow">ⓘ <b>표본 측정</b> 결과입니다. 같은 질문에도 AI 답변은 달라질 수 있어, 수치는 방향을 보는 참고값입니다. 새 글이 AI 답변에 반영되기까지 약 2개월이 걸린다는 설명이 있어, 최근 게시한 글은 아직 반영되지 않았을 수 있습니다.</div></div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">전체 노출률</div><div class="val">${eb == null ? '—' : eb + '%'}</div><div class="small">${esc(RA.name)} ${ea == null ? '—' : ea + '%'} → ${deltaTxt(ea, eb)}</div></div>
+    <div class="kpi"><div class="label">목표 매장 노출률</div><div class="val">${pctTxt(sb.te, sb.tn)}</div><div class="small">${esc(RA.name)} ${pctTxt(sa.te, sa.tn)} → ${deltaTxt(pct(sa.te, sa.tn), pct(sb.te, sb.tn))}</div></div>
+    <div class="kpi"><div class="label">새로 노출된 질의</div><div class="val">${d.newly.length}<small>개</small></div><div class="small">노출이 빠진 질의 ${d.dropped.length}개</div></div>
+    <div class="kpi"><div class="label">기간 중 게시한 글</div><div class="val">${d.arts.length}<small>건</small></div><div class="small">기간 이전 게시 ${d.earlier}건</div></div>
+  </div>
+  <p class="small muted">비교: <b>${esc(RA.name)}</b> (${esc(RA.date)}, 수집 ${sa.n}개) → <b>${esc(RB.name)}</b> (${esc(RB.date)}, 수집 ${sb.n}개)${d.added ? ` · 이후 회차에 추가된 질의 ${d.added}개는 질의 단위 비교에서 제외` : ''}</p>
+  ${gTable('AI별 노출률', d.ai)}${gTable('지역별 노출률', d.region)}${gTable('테마별 노출률', d.theme)}
+  <div class="grid2" style="margin-bottom:16px"><div class="card"><h2>새로 노출된 질의</h2>${qList(d.newly, '없습니다.')}</div><div class="card"><h2>노출이 빠진 질의</h2>${qList(d.dropped, '없습니다.')}</div></div>
+  <div class="card"><h2>인용 출처 순위 변화</h2>${d.src.length ? `<div class="table-wrap"><table class="t stack"><thead><tr><th class="num">순위</th><th>출처</th><th class="num">등장 (${esc(RB.name)})</th><th class="num">이전</th><th>순위 변화</th></tr></thead><tbody>${d.src.map(s => `<tr><td data-label="순위" class="num">${s.rank}</td><td data-label="출처"><b>${esc(s.name)}</b></td><td data-label="등장" class="num">${s.n}</td><td data-label="이전" class="num">${s.prev ? `${s.prev}위 · ${s.prevN}` : '새로 등장'}</td><td data-label="순위 변화">${s.prev ? (s.prev > s.rank ? `<span class="delta up">▲ ${s.prev - s.rank}</span>` : s.prev < s.rank ? `<span class="delta down">▼ ${s.rank - s.prev}</span>` : '<span class="muted">같음</span>') : '<span class="muted">—</span>'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">출처 데이터가 없습니다.</p>'}</div>
+  <div class="card"><h2>기간 중 게시한 글</h2>${d.arts.length ? `<div class="table-wrap"><table class="t stack"><thead><tr><th>글</th><th>게시일</th><th class="num">측정일까지</th></tr></thead><tbody>${d.arts.map(({ a, gap }) => `<tr><td data-label="글" class="mc"><b>${esc(a.title)}</b><div class="qmeta">${a.queryIds.map(id => esc(qText(id))).join(' / ')}</div></td><td data-label="게시일">${esc(a.publishedAt)}</td><td data-label="측정일까지" class="num">${gap}일${gap < 60 ? ' <span class="badge warn">반영 전일 수 있음</span>' : ''}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted" style="margin:0">이 기간에 게시일을 기록한 글이 없습니다.</p>'}</div>
+  <div class="card"><h2>외부 출처 처리 현황</h2><p style="margin:0">기간 중 확인한 칸 <b>${d.checksN}개</b>${d.chCount.length ? ' — ' + d.chCount.map(([s, n]) => `${esc(s)} ${n}`).join(' · ') : ''} · 남은 할 일 <b>${d.todos.length}개</b></p></div>
+  <div class="card"><h2>다음 달 작업 후보</h2>
+    <h3>여전히 빈 질의 ${d.empty.length}개${d.pending ? ` <span class="small muted">(판단 보류 ${d.pending}개 별도)</span>` : ''}</h3>${qList(d.empty, '없습니다.')}
+    <h3 style="margin-top:14px">손볼 외부 출처 ${d.todos.length}개</h3>${d.todos.length ? `<ul class="list">${d.todos.map(t => `<li><span class="grow"><b>${esc(t.st.name)}</b> · ${esc(t.src.name)}</span><span class="small muted">${t.why.map(esc).join(' · ')}</span></li>`).join('')}</ul>` : '<p class="muted" style="margin:0">없습니다.</p>'}</div>`;
+}
+function vReport() {
+  const rs = roundsSorted();
+  if (!rs.length) return `${pageHead('월간 리포트')}<div class="card empty"><div class="big">🗂️</div><p>측정 회차가 있어야 리포트를 만들 수 있습니다.</p><a class="btn primary" href="#rounds">측정 회차로</a></div>`;
+  const RA = byId('rounds', ui.repA) || rs[0]; const RB = byId('rounds', ui.repB) || rs[rs.length - 1];
+  const o = rs.map(r => [r.id, `${r.name} · ${r.date}`]);
+  return `${pageHead('월간 리포트', '두 회차를 골라 비교합니다. 기본은 기준점 대비 최신 회차입니다.', `<button class="btn primary" data-act="repDownload">리포트 HTML 내려받기</button>`)}
+  <div class="card"><div class="frow"><div class="field"><label for="rep_a">비교 기준 회차</label><select id="rep_a" data-ch="repSel" data-k="repA">${opts(o, RA.id)}</select></div><div class="field"><label for="rep_b">비교 대상 회차</label><select id="rep_b" data-ch="repSel" data-k="repB">${opts(o, RB.id)}</select></div></div>
+  ${RA.id === RB.id ? '<p class="hint" style="margin:0">같은 회차를 골랐습니다. 회차가 2개 이상이면 다른 회차를 고르세요.</p>' : ''}</div>
+  <div class="report-doc">${reportBody(reportData(RA, RB))}</div>`;
+}
+CH.repSel = el => { ui[el.dataset.k] = el.value; render(); };
+A.repDownload = () => {
+  const rs = roundsSorted(); const RA = byId('rounds', ui.repA) || rs[0]; const RB = byId('rounds', ui.repB) || rs[rs.length - 1];
+  const d = reportData(RA, RB); const owner = S.settings.ownerName || '';
+  const title = `GEO 월간 리포트 — ${d.RA.name} → ${d.RB.name}`;
+  const css = $('style').textContent.split('/* round grid cells */')[0];
+  const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)}</title><style>${css}
+body{background:#fff}.wrap{max-width:980px;margin:0 auto;padding:24px 16px 48px}.card,.kpi{box-shadow:none}@media print{.card,.kpi{break-inside:avoid}}</style></head><body><div class="wrap">
+<h1>${esc(title)}</h1><p class="sub">${esc(owner)}${owner ? ' · ' : ''}작성 ${esc(today())} · 내부 보고용</p><hr>${reportBody(d)}</div></body></html>`;
+  download(`geo-report-${safeFile(d.RB.name)}-${today()}.html`, html, 'text/html'); toast('리포트를 내려받았습니다');
+};
+
+/* =========================================================
+   F-11 저장·백업·설정
+   ========================================================= */
+function backupAge() { const lb = S.settings.lastBackup; return lb ? daysBetween(lb, today()) : null; }
+const hasData = () => COLL.some(c => S[c].length) ;
+function vSettings() {
+  const s = S.settings;
+  ['ais', 'regions', 'categories', 'themes', 'claimWords'].forEach(k => TAGS['set_' + k] = { get: () => s[k], set: v => { s[k] = v; saveSettings(); } });
+  const dictRows = s.sourceDict.map((d, i) => `<tr><td data-label="이름"><b>${esc(d.name)}</b></td><td data-label="도메인" class="small">${d.domains.map(esc).join(', ') || '<span class="muted">—</span>'}</td><td data-label="이름 별칭" class="small">${d.aliases.map(esc).join(', ') || '<span class="muted">—</span>'}</td><td data-label="관리" class="nowrap"><button class="btn ghost" data-act="dictEdit" data-i="${i}">수정</button><button class="btn ghost" data-act="dictDel" data-i="${i}" aria-label="삭제">✕</button></td></tr>`).join('');
+  const csRows = s.checkSources.map((c, i) => `<li><span class="grow"><b>${esc(c.name)}</b> <span class="small muted">${c.dictName ? `인용 집계: ${esc(c.dictName)}` : '인용 집계 연결 없음'}</span></span><button class="btn ghost" data-act="csEdit" data-i="${i}">수정</button><button class="btn ghost" data-act="csDel" data-i="${i}" aria-label="삭제">✕</button></li>`).join('');
+  const age = backupAge(); const why = sitemapBlock();
+  afterRender.push(async () => { try { const e = await navigator.storage?.estimate?.(); const el = $('#storage-est'); if (e && el) el.textContent = `브라우저 저장 공간 사용량 약 ${(e.usage / 1048576).toFixed(1)}MB`; } catch (_) { } });
+  return `${pageHead('설정·백업', '목록·사전·운영 주체 정보를 관리하고 데이터를 백업합니다.')}
+  <div class="card"><h2>백업·복원</h2>
+    <p style="margin:0 0 10px">마지막 백업: <b>${s.lastBackup ? esc(fmtDT(s.lastBackup)) : '없음'}</b>${age != null && age > 7 ? ' ' + badge(`${age}일 지남`, 'warn') : ''}</p>
+    <div class="actions"><button class="btn primary" data-act="backup">전체 백업 내려받기 (JSON)</button><button class="btn" data-act="restore">백업 불러오기</button><button class="btn danger" data-act="wipe">전체 삭제</button></div>
+    <p class="hint" style="margin:10px 0 0">데이터는 이 브라우저(IndexedDB)에만 저장됩니다. 브라우저 기록을 지우면 사라지니 정기적으로 백업하세요. 두 사람이 나눠 일할 때는 백업 파일을 주고받습니다.</p>
+    <p class="small muted" style="margin:6px 0 0">매장 ${S.stores.length} · 질의 ${S.queries.length} · 회차 ${S.rounds.length} · 답변 ${S.answers.length} · 글 ${S.articles.length} · 출처 기록 ${S.sourceChecks.length}<br><span id="storage-est"></span></p></div>
+  <div class="card"><h2>운영 주체·공식 홈페이지</h2>
+    <div class="field"><label for="set_owner">운영 주체명 (글 "공식 작성"·llms.txt에 쓰임)</label><input type="text" id="set_owner" value="${esc(s.ownerName)}" data-ch="setF" data-k="ownerName" placeholder="예: 주식회사 OO"></div>
+    <div class="field"><label for="set_intro">운영 주체 소개 (llms.txt 첫 문단)</label><textarea id="set_intro" rows="2" data-ch="setF" data-k="ownerIntro">${esc(s.ownerIntro)}</textarea></div>
+    <div class="field"><label for="set_site">공식 홈페이지 주소 (canonical·sitemap에 쓰임)</label><input type="url" id="set_site" value="${esc(s.siteUrl)}" data-ch="setF" data-k="siteUrl" placeholder="https://..."></div></div>
+  <div class="card"><h2>llms.txt · sitemap.xml 내보내기</h2>
+    <div class="actions"><button class="btn" data-act="dlLlms">llms.txt 내려받기</button><button class="btn" data-act="copyLlms">llms.txt 복사</button><button class="btn" data-act="dlSitemap" ${why ? 'disabled' : ''}>sitemap.xml 내려받기</button></div>
+    ${why ? `<p class="hint" style="margin:8px 0 0">sitemap.xml을 만들 수 없습니다: ${esc(why)}</p>` : ''}
+    <p class="hint" style="margin:8px 0 0">승인된 글만 들어갑니다. 홈페이지 루트에 올리거나 개발자에게 전달하세요.</p></div>
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card"><h2>측정 AI</h2>${tagEditor('set_ais', s.ais, '예: 네이버 AI 브리핑')}</div>
+    <div class="card"><h2>근거 필요 표현</h2><p class="hint" style="margin-top:-6px">글에 나오면 "주의"로 표시합니다.</p>${tagEditor('set_claimWords', s.claimWords, '예: 명물')}</div>
+    <div class="card"><h2>지역</h2>${tagEditor('set_regions', s.regions, '예: 영등포')}</div>
+    <div class="card"><h2>업종</h2>${tagEditor('set_categories', s.categories, '예: 막창')}</div>
+    <div class="card"><h2>테마</h2>${tagEditor('set_themes', s.themes, '예: 룸')}</div>
+  </div>
+  <div class="card"><div class="card-head"><h2>출처 사전</h2><button class="btn soft" data-act="dictAdd">+ 출처</button><button class="btn ghost" data-act="dictReset">기본값으로</button></div>
+    <p class="hint" style="margin-top:-6px">답변 속 링크 도메인과 이름으로 출처를 찾습니다. 도메인은 하위 도메인까지 포함합니다(예: naver.com → m.place.naver.com). 공식 홈페이지는 위 주소와 매장 공식 정보 페이지 주소로 찾습니다.</p>
+    <div class="table-wrap"><table class="t stack"><thead><tr><th>이름</th><th>도메인</th><th>이름 별칭</th><th></th></tr></thead><tbody>${dictRows}</tbody></table></div></div>
+  <div class="card"><div class="card-head"><h2>외부 출처 체크리스트 항목</h2><button class="btn soft" data-act="csAdd">+ 항목</button></div>
+    <p class="hint" style="margin-top:-6px">"인용 집계"는 출처 사전의 이름과 연결해 체크리스트에 AI 인용 횟수를 보여 줍니다. naejari.kr은 용도 확인 후 유지 여부를 정하세요.</p>
+    <ul class="list">${csRows}</ul></div>`;
+}
+CH.setF = async el => {
+  const k = el.dataset.k; let v = el.value.trim();
+  if (k === 'siteUrl' && v && !safeUrl(v)) { toast('주소는 http:// 또는 https://로 시작해야 합니다', 'warn'); el.value = S.settings.siteUrl; return; }
+  S.settings[k] = v; await saveSettings(); renderNav(route().name);
+};
+A.copyLlms = () => copyText(buildLlms(), 'llms.txt 내용을 복사했습니다');
+function dictFields(d = {}) { return [{ id: 'name', label: '출처 이름', required: true, value: d.name || '', autofocus: true }, { id: 'domains', label: '도메인 (쉼표로 구분)', type: 'textarea', rows: 2, value: (d.domains || []).join(', '), placeholder: '예: diningcode.com' }, { id: 'aliases', label: '이름 별칭 (쉼표로 구분, 링크 없이 이름만 나올 때 찾음)', type: 'textarea', rows: 2, value: (d.aliases || []).join(', ') }]; }
+const cleanDomains = s => uniq(splitList(s).map(x => x.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '')).filter(Boolean));
+A.dictAdd = async () => { const r = await askForm('출처 추가', dictFields()); if (!r) return; S.settings.sourceDict.push({ id: uid('src_'), name: r.name, domains: cleanDomains(r.domains), aliases: splitList(r.aliases) }); await saveSettings(); render(); };
+A.dictEdit = async el => {
+  const d = S.settings.sourceDict[+el.dataset.i]; const old = d.name; const r = await askForm('출처 수정', dictFields(d)); if (!r) return;
+  Object.assign(d, { name: r.name, domains: cleanDomains(r.domains), aliases: splitList(r.aliases) });
+  S.settings.checkSources.forEach(c => { if (c.dictName === old) c.dictName = r.name; });
+  await saveSettings(); render(); toast('이후 판정부터 반영됩니다. 기존 답변은 "자동 판정 다시"로 갱신할 수 있습니다.', 'ok', 4000);
+};
+A.dictDel = async el => { const d = S.settings.sourceDict[+el.dataset.i]; if (!await ask('출처 삭제', `"${d.name}"을(를) 출처 사전에서 삭제할까요? 기존 답변의 판정은 그대로 남습니다.`, { ok: '삭제', danger: true })) return; S.settings.sourceDict.splice(+el.dataset.i, 1); await saveSettings(); render(); };
+A.dictReset = async () => { if (!await ask('출처 사전 기본값', '출처 사전을 기본값으로 되돌릴까요? 직접 추가한 출처는 사라집니다.', { ok: '되돌리기', danger: true })) return; S.settings.sourceDict = DEFAULT_DICT(); await saveSettings(); render(); };
+function csFields(c = {}) { return [{ id: 'name', label: '항목 이름', required: true, value: c.name || '', autofocus: true }, { id: 'dictName', label: '인용 집계 연결 (출처 사전)', type: 'select', options: [['', '연결 안 함'], ...S.settings.sourceDict.map(d => d.name)], value: c.dictName || '' }]; }
+A.csAdd = async () => { const r = await askForm('체크리스트 항목 추가', csFields()); if (!r) return; S.settings.checkSources.push({ id: uid('cs_'), ...r }); await saveSettings(); render(); };
+A.csEdit = async el => { const c = S.settings.checkSources[+el.dataset.i]; const r = await askForm('체크리스트 항목 수정', csFields(c)); if (!r) return; Object.assign(c, r); await saveSettings(); render(); };
+A.csDel = async el => {
+  const c = S.settings.checkSources[+el.dataset.i]; const recs = S.sourceChecks.filter(x => x.sourceId === c.id);
+  if (!await ask('항목 삭제', `"${c.name}" 항목을 삭제할까요?${recs.length ? `\n이 항목의 매장별 기록 ${recs.length}개도 삭제됩니다.` : ''}`, { ok: '삭제', danger: true })) return;
+  S.settings.checkSources.splice(+el.dataset.i, 1); await saveSettings(); if (recs.length) await delMany('sourceChecks', recs.map(x => x.id)); render();
+};
+A.backup = async () => {
+  S.settings.lastBackup = nowISO(); await saveSettings();
+  const data = { settings: S.settings }; COLL.forEach(c => data[c] = S[c]);
+  download(`geo-console-backup-${today()}.json`, JSON.stringify({ app: 'geo-console', dataVersion: DATA_VERSION, exportedAt: nowISO(), data }), 'application/json');
+  toast('백업 파일을 내려받았습니다'); render();
+};
+A.restore = () => { const f = $('#restore-file'); f.value = ''; f.click(); };
+function validBackup(o) {
+  if (!o || o.app !== 'geo-console' || !o.data || typeof o.data !== 'object') return '이 앱의 백업 파일이 아닙니다.';
+  const d = o.data;
+  if (!d.settings || typeof d.settings !== 'object' || !Array.isArray(d.settings.ais)) return '설정 정보가 없습니다.';
+  for (const c of COLL) { if (!Array.isArray(d[c])) return `"${c}" 데이터가 없습니다.`; if (d[c].some(x => !x || typeof x.id !== 'string')) return `"${c}" 데이터 형식이 올바르지 않습니다.`; }
+  if ((o.dataVersion || 1) > DATA_VERSION) return '더 새로운 버전의 앱에서 만든 백업입니다.';
+  return '';
+}
+async function onRestoreFile(e) {
+  const file = e.target.files[0]; if (!file) return;
+  let o; try { o = JSON.parse(await file.text()); } catch (_) { toast('백업 파일을 읽을 수 없습니다. 기존 데이터를 그대로 두었습니다.', 'err', 5000); return; }
+  const bad = validBackup(o); if (bad) { toast(`불러오지 않았습니다: ${bad} 기존 데이터를 그대로 두었습니다.`, 'err', 6000); return; }
+  const d = o.data;
+  if (!await ask('백업 불러오기', `지금 데이터를 모두 지우고 백업(${fmtDT(o.exportedAt) || '날짜 미상'})으로 바꿉니다.\n매장 ${d.stores.length} · 질의 ${d.queries.length} · 회차 ${d.rounds.length} · 답변 ${d.answers.length} · 글 ${d.articles.length}\n계속할까요?`, { ok: '덮어쓰기', danger: true })) return;
+  const settings = { ...d.settings, id: 'main' };
+  try {
+    await tx(ALL_STORES, 'readwrite', t => { ALL_STORES.forEach(s => t.objectStore(s).clear()); t.objectStore('settings').put(settings); COLL.forEach(c => { const os = t.objectStore(c); d[c].forEach(x => os.put(x)); }); });
+  } catch (err) { console.error(err); toast('불러오기에 실패했습니다. 기존 데이터를 그대로 두었습니다.', 'err', 6000); return; }
+  S.settings = settings; COLL.forEach(c => S[c] = d[c]); migrateSettings();
+  cur.store = cur.article = null; ui.qsel.clear(); ui.dashRound = ui.repA = ui.repB = '';
+  toast('백업을 불러왔습니다'); go('home');
+}
+A.wipe = async () => {
+  if (!await ask('전체 삭제', '이 브라우저에 저장된 모든 데이터(매장·질의·측정·글·출처·설정)를 삭제합니다. 되돌릴 수 없습니다.\n먼저 백업을 받았는지 확인하세요.', { ok: '모두 삭제', danger: true })) return;
+  const settings = defaultSettings();
+  try { await tx(ALL_STORES, 'readwrite', t => { ALL_STORES.forEach(s => t.objectStore(s).clear()); t.objectStore('settings').put(settings); }); }
+  catch (err) { saveFail(err); return; }
+  S.settings = settings; COLL.forEach(c => S[c] = []); cur.store = cur.article = null; ui.qsel.clear(); ui.dashRound = ui.repA = ui.repB = '';
+  toast('모든 데이터를 삭제했습니다'); go('home');
+};
+
+/* =========================================================
+   홈 (이번 달 할 일)
+   ========================================================= */
+function vHome() {
+  const r = latestRound(); const [got, tot] = r ? roundProgress(r) : [0, 0]; const st = r ? roundStats(r) : null;
+  const empty = st ? st.queries.filter(x => x.kind === 'empty') : [];
+  const review = S.articles.filter(a => a.status === 'review'); const todos = sourceTodos(); const running = runningQueries().length;
+  const age = backupAge();
+  const backupNote = hasData() && (age == null || age > 7) ? `<div class="notice warn"><div class="grow"><b>백업 안내</b> — ${age == null ? '아직 백업한 적이 없습니다.' : `마지막 백업 후 ${age}일이 지났습니다.`} 브라우저 기록을 지우면 데이터가 사라집니다.</div><button class="btn" data-act="backup">지금 백업</button></div>` : '';
+  const setupNote = !S.settings.ownerName ? `<div class="notice info"><div class="grow">설정에서 <b>운영 주체명</b>과 <b>공식 홈페이지 주소</b>를 입력하면 글·llms.txt·sitemap에 반영됩니다.</div><a class="btn" href="#settings">설정으로</a></div>` : '';
+  const allDone = st && st.n > 0 && S.answers.filter(a => a.roundId === r.id).every(a => a.done);
+  const steps = [
+    ['1', '질의 설계', `운영 중 ${running}개`, 'queries', running > 0],
+    ['2', '측정', r ? `${got} / ${tot} 수집` : '회차 없음', r ? 'round/' + r.id : 'rounds', r && tot && got === tot],
+    ['3', '분석', st ? `노출률 ${pctTxt(st.e, st.n)}` : '측정 후', 'dashboard', allDone],
+    ['4', '작업', `검수 대기 ${review.length} · 출처 할 일 ${todos.length}`, 'articles', false],
+    ['5', '리포트', S.rounds.length > 1 ? '회차 비교 가능' : '회차 2개부터', 'report', false],
+  ];
+  return `${pageHead('이번 달 할 일', `${esc(today())} · 측정 → 분석 → 글·출처 작업 → 리포트`)}
+  ${backupNote}${setupNote}
+  <div class="card hero"><div class="card-head"><h2 style="color:#fff">${r ? esc(r.name) : '첫 측정을 시작하세요'}</h2></div>
+    ${r ? `<p class="sub" style="margin:-6px 0 12px">${esc(r.date)} · 질의 ${r.queries.length}개 × AI ${r.ais.length}곳</p>${meter(got, tot)}` : `<p class="sub" style="margin:-6px 0 12px">질의 세트에서 측정할 질의를 "운영 중"으로 두고, 첫 회차(기준점)를 만드세요.</p>`}
+    <div class="actions" style="margin-top:14px">${r && got < tot ? `<a class="btn white" href="#round/${r.id}">측정 이어하기</a>` : ''}<button class="btn ${r && got < tot ? '' : 'white'}" data-act="roundAdd">+ 새 회차</button></div></div>
+  <div class="kpis">
+    <a class="kpi" href="${r ? '#round/' + r.id : '#rounds'}"><div class="label">측정 진행률</div><div class="val">${tot ? pctTxt(got, tot) : '—'}</div><div class="small muted">${got} / ${tot}칸</div></a>
+    <a class="kpi" href="#dashboard"><div class="label">빈 질의</div><div class="val">${empty.length}<small>개</small></div><div class="small muted">모든 AI에서 우리 매장 없음</div></a>
+    <a class="kpi" href="#articles"><div class="label">검수 대기 글</div><div class="val">${review.length}<small>건</small></div><div class="small muted">승인 ${pubArticles().length}건</div></a>
+    <a class="kpi" href="#sources"><div class="label">외부 출처 할 일</div><div class="val">${todos.length}<small>개</small></div><div class="small muted">미등록·불일치·답글</div></a>
+  </div>
+  <div class="card"><h2>월간 사이클</h2><div class="steps">${steps.map(([n, t, d, h, done]) => `<a class="step ${done ? 'done' : ''}" href="#${h}"><span class="n">${done ? '✓ ' : ''}STEP ${n}</span><b>${t}</b><span class="small muted">${d}</span></a>`).join('')}</div>
+    <p class="hint" style="margin:10px 0 0">새 글이 AI 답변에 반영되기까지 약 2개월이 걸린다는 설명이 있어, 리포트에서 글 게시일과 측정일 간격을 함께 봅니다.</p></div>
+  <div class="grid2">
+    <div class="card"><h2>빈 질의</h2>${empty.length ? `<ul class="list">${empty.slice(0, 6).map(x => `<li><span class="grow">${esc(x.q.text)}</span>${articlesForQuery(x.q.id).length ? `<a class="btn ghost" href="#article/${articlesForQuery(x.q.id)[0].id}">글 보기</a>` : `<button class="btn soft" data-act="artFromQuery" data-q="${x.q.id}" data-r="${r.id}">글 만들기</button>`}</li>`).join('')}</ul>${empty.length > 6 ? `<a href="#dashboard" class="small">전체 ${empty.length}개 보기 →</a>` : ''}` : `<p class="muted" style="margin:0">${st ? '빈 질의가 없습니다.' : '측정 후 표시됩니다.'}</p>`}</div>
+    <div class="card"><h2>검수 대기 글</h2>${review.length ? `<ul class="list">${review.map(a => `<li><a class="grow qtext" href="#article/${a.id}">${esc(a.title || '(제목 없음)')}</a>${badge('검수 요청', 'warn')}</li>`).join('')}</ul>` : '<p class="muted" style="margin:0">없습니다.</p>'}</div>
+  </div>`;
+}
+
+/* =========================================================
+   시작
+   ========================================================= */
+async function init() {
+  try { idb = await openDB(); }
+  catch (e) { $('#main').innerHTML = `<div class="notice err"><div class="grow"><b>저장소를 열 수 없습니다.</b> ${esc(e.message || e)}<br>시크릿 창이거나 브라우저가 저장을 막고 있을 수 있습니다. 일반 창의 최신 Chrome·Edge·Safari에서 열어 주세요.</div></div>`; return; }
+  try {
+    for (const c of COLL) S[c] = await getAll(c);
+    S.settings = (await getAll('settings')).find(x => x.id === 'main') || null;
+  } catch (e) { $('#main').innerHTML = `<div class="notice err"><div class="grow">데이터를 읽지 못했습니다: ${esc(e.message || e)}</div></div>`; return; }
+  if (!S.settings) { S.settings = defaultSettings(); await saveSettings(); }
+  else migrateSettings();
+  if (!S.settings.directStoresApplied) await applyDirectStores(true);
+  try { navigator.storage?.persist?.(); } catch (_) { }
+  $('#restore-file').addEventListener('change', onRestoreFile);
+  render();
+}
+init();
+
+</script>
+</body>
+</html>
